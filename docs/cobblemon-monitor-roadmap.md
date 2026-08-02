@@ -14,6 +14,54 @@ EventKey = dimension + block position + event type
 
 따라서 여러 목장이나 여러 스낵이 동시에 존재해도 서로 다른 이벤트로 구분한다.
 
+## 목장 감시 대상 지정
+
+목장을 자동으로 전부 감시하는 모드와 사용자가 지정한 목장만 감시하는 모드를
+분리한다. 기본값은 사용자가 등록한 목장만 감시하는 선택 모드로 한다.
+
+클라이언트 명령어 예시:
+
+```text
+/cobble-monitor pasture add <x> <y> <z>
+/cobble-monitor pasture add ~ ~ ~
+/cobble-monitor pasture add looking
+/cobble-monitor pasture remove <x> <y> <z>
+/cobble-monitor pasture list
+/cobble-monitor pasture clear
+/cobble-monitor pasture mode selected
+/cobble-monitor pasture mode nearby
+```
+
+동작 규칙:
+
+- 좌표를 지정하면 현재 차원과 함께 저장한다.
+- `looking`은 플레이어가 바라보는 블록이 실제 Cobblemon Pasture인지 확인한 뒤 등록한다.
+- 등록되지 않은 블록은 알 감시 대상이 아니다.
+- `selected` 모드에서는 등록한 목장만 감시한다.
+- `nearby` 모드에서는 현재 로드된 주변 목장을 감시할 수 있지만, 명시적으로
+  선택한 목장과 혼동하지 않도록 별도 모드로 둔다.
+- `list`는 차원, 좌표, 현재 로드 여부, 마지막으로 확인한 알 상태를 표시한다.
+- `remove`와 `clear`는 클라이언트 설정만 변경하며 월드나 목장 블록에는 영향을 주지 않는다.
+
+설정 구조 예시:
+
+```json
+{
+  "pastureMonitorMode": "selected",
+  "monitoredPastures": [
+    {
+      "dimension": "minecraft:overworld",
+      "x": 120,
+      "y": 65,
+      "z": -318
+    }
+  ]
+}
+```
+
+명령어는 Fabric Client Command API로 등록하여 서버 설치 없이 사용할 수 있게 한다.
+서버 명령어로 만들지 않으므로 Vanilla 서버에서도 명령어 등록을 요구하지 않는다.
+
 ## Pasture Egg
 
 ### 현재 클라이언트에서 확인 가능한 정보
