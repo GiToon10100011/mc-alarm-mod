@@ -53,7 +53,9 @@ EventKey = dimension + block position + event type
       "dimension": "minecraft:overworld",
       "x": 120,
       "y": 65,
-      "z": -318
+      "z": -318,
+      "registeredByUuid": "00000000-0000-0000-0000-000000000000",
+      "registeredByName": "PlayerName"
     }
   ]
 }
@@ -61,6 +63,18 @@ EventKey = dimension + block position + event type
 
 명령어는 Fabric Client Command API로 등록하여 서버 설치 없이 사용할 수 있게 한다.
 서버 명령어로 만들지 않으므로 Vanilla 서버에서도 명령어 등록을 요구하지 않는다.
+
+`registeredByUuid`와 `registeredByName`은 명령어를 실행한 클라이언트 플레이어의
+정보다. 알림에는 다음처럼 표시할 수 있다.
+
+```text
+Monitored by: PlayerName
+Pasture: overworld 120, 65, -318
+```
+
+이 값은 목장 블록을 실제로 설치한 플레이어를 의미하지 않는다. 실제 설치자 정보가
+필요한 경우에는 서버가 별도로 소유자 데이터를 제공해야 하며, Snack의
+`PlacedBy`와도 구분해서 `Registered By`와 `Placed By`를 별도 필드로 표시한다.
 
 ## Pasture Egg
 
