@@ -2,6 +2,8 @@
 
 Fabric 1.21.1용 순수 클라이언트 모드입니다. 월드 밤 시작, 선택한 Cobblemon 목장의 알 생성, Poke Snack 소비를 Discord Webhook과 ntfy로 알립니다.
 
+전체 설치 절차와 명령어 설명은 [상세 사용자 매뉴얼](docs/user-manual.md)을 참고하세요.
+
 ## 요구 사항
 
 - Minecraft 1.21.1
@@ -58,6 +60,15 @@ Discord Webhook URL 또는 ntfy topic을 입력하고 해당 기능을 활성화
 ```
 
 등록된 목장은 차원과 좌표로 구분되며, 명령어를 실행한 플레이어의 UUID와 닉네임이 `registeredBy` 정보로 저장됩니다.
+
+게임 안에서 사용법을 확인하려면 다음 명령어를 실행합니다.
+
+```text
+/cobble-monitor help
+/cobble-monitor help pasture
+/cobble-monitor help notifications
+/cobble-monitor help config
+```
 
 ## 빌드
 

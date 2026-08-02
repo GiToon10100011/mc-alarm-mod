@@ -15,6 +15,15 @@ public final class CobbleMonitorCommands {
     public static void register(ConfigManager configManager, Runnable reloadAction) {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(
                 ClientCommandManager.literal("cobble-monitor")
+                        .executes(context -> helpGeneral())
+                        .then(ClientCommandManager.literal("help")
+                                .executes(context -> helpGeneral())
+                                .then(ClientCommandManager.literal("pasture")
+                                        .executes(context -> helpPasture()))
+                                .then(ClientCommandManager.literal("notifications")
+                                        .executes(context -> helpNotifications()))
+                                .then(ClientCommandManager.literal("config")
+                                        .executes(context -> helpConfig())))
                         .then(ClientCommandManager.literal("reload")
                                 .executes(context -> {
                                     reloadAction.run();
@@ -50,6 +59,49 @@ public final class CobbleMonitorCommands {
                                         .executes(context -> clear(configManager)))
                         )
         ));
+    }
+
+    private static int helpGeneral() {
+        feedback("Cobble Monitor commands:");
+        feedback("/cobble-monitor help [pasture|notifications|config]");
+        feedback("/cobble-monitor pasture add looking");
+        feedback("/cobble-monitor pasture add <x> <y> <z>");
+        feedback("/cobble-monitor pasture remove <x> <y> <z>");
+        feedback("/cobble-monitor pasture list");
+        feedback("/cobble-monitor pasture clear");
+        feedback("/cobble-monitor reload");
+        return 1;
+    }
+
+    private static int helpPasture() {
+        feedback("Pasture monitoring:");
+        feedback("Look at a Cobblemon pasture, then run:");
+        feedback("/cobble-monitor pasture add looking");
+        feedback("Or use coordinates in the current dimension:");
+        feedback("/cobble-monitor pasture add <x> <y> <z>");
+        feedback("Remove one: /cobble-monitor pasture remove <x> <y> <z>");
+        feedback("Show all: /cobble-monitor pasture list");
+        feedback("Remove all: /cobble-monitor pasture clear");
+        feedback("Only registered pastures are monitored.");
+        return 1;
+    }
+
+    private static int helpNotifications() {
+        feedback("Notifications:");
+        feedback("Night: detected when world time reaches nightTime.");
+        feedback("Pasture Egg: detected when HAS_EGG changes false -> true.");
+        feedback("Snack: detected from Cobblemon's snack S2C packet.");
+        feedback("Discord uses Embed cards; ntfy uses plain text.");
+        feedback("Use config events.* to enable or disable event types.");
+        return 1;
+    }
+
+    private static int helpConfig() {
+        feedback("Configuration:");
+        feedback("File: config/cobble-monitor.json");
+        feedback("Edit the file, then run /cobble-monitor reload.");
+        feedback("Webhook values are kept local and are never logged.");
+        return 1;
     }
 
     private static int addLooking(ConfigManager configManager) {
