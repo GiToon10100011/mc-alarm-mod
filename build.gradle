@@ -12,7 +12,6 @@ base {
 
 repositories {
     // Fabric Loom adds the Fabric Maven repository automatically.
-    // Keep this block available for future optional dependencies.
 }
 
 dependencies {
@@ -20,6 +19,15 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Optional integration jars are supplied as local Gradle properties during
+    // development. They remain compile-only and are never bundled into the mod.
+    if (project.hasProperty('cobblemonJar')) {
+        modCompileOnly files(project.property('cobblemonJar'))
+    }
+    if (project.hasProperty('cobbreedingJar')) {
+        modCompileOnly files(project.property('cobbreedingJar'))
+    }
 }
 
 processResources {

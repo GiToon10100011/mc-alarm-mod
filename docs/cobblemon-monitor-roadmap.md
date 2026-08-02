@@ -23,7 +23,6 @@ EventKey = dimension + block position + event type
 
 ```text
 /cobble-monitor pasture add <x> <y> <z>
-/cobble-monitor pasture add ~ ~ ~
 /cobble-monitor pasture add looking
 /cobble-monitor pasture remove <x> <y> <z>
 /cobble-monitor pasture list

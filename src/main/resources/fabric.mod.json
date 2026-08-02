@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "nightnotifier",
+  "id": "cobble-monitor",
   "version": "${version}",
-  "name": "Minecraft Night Notifier",
-  "description": "Sends a push notification when night begins in a Minecraft world.",
+  "name": "Cobble Monitor",
+  "description": "Client-side Minecraft event monitor with Discord and ntfy notifications.",
   "authors": [
     "GiToon10100011"
   ],
@@ -14,13 +14,23 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "com.example.nightnotifier.NightNotifierClient"
+      "com.example.cobblemonitor.CobbleMonitorClient"
     ]
   },
+  "mixins": [
+    {
+      "config": "cobble-monitor.mixins.json",
+      "environment": "client"
+    }
+  ],
   "depends": {
     "fabricloader": ">=0.16.5",
     "minecraft": "~1.21.1",
     "java": ">=21",
     "fabric-api": "*"
+  },
+  "suggests": {
+    "cobblemon": ">=1.7.3",
+    "cobbreeding": ">=2.2.2"
   }
 }
