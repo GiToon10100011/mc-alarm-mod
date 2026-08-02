@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "nightnotifier",
+  "version": "${version}",
+  "name": "Minecraft Night Notifier",
+  "description": "Sends a push notification when night begins in a Minecraft world.",
+  "authors": [
+    "GiToon10100011"
+  ],
+  "contact": {
+    "sources": "https://github.com/GiToon10100011/mc-alarm-mod"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.example.nightnotifier.NightNotifierClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.5",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

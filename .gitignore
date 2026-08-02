@@ -1,0 +1,13 @@
+.gradle/
+build/
+out/
+run/
+*.iml
+.idea/
+*.log
+config/
+
+# Local credentials and machine-specific files
+local.properties
+*.p12
+*.jks
