@@ -179,6 +179,59 @@ Gender: Female
 주변 PokemonEntity를 별도로 확인한다. Pokemon을 찾는 검색은 패킷이 수신된
 경우에만 짧게 실행하며 매 Tick 전체 엔티티 순회를 하지 않는다.
 
+## Discord Embed 알림
+
+Discord Webhook은 긴 메타데이터를 일반 문자열 하나로 보내지 않고 Embed 카드로
+구성한다. ntfy는 모바일 알림 목록에서 빠르게 읽을 수 있도록 짧은 평문을 사용한다.
+
+공통 Embed 구조:
+
+```json
+{
+  "username": "Cobble Monitor",
+  "embeds": [
+    {
+      "title": "🍪 Snack Consumed",
+      "description": "A wild Pokemon consumed a Poke Snack.",
+      "color": 16753920,
+      "fields": [
+        {"name": "Pokemon", "value": "Gengar", "inline": true},
+        {"name": "Level", "value": "43", "inline": true},
+        {"name": "Shiny", "value": "false", "inline": true},
+        {"name": "Owner", "value": "PlayerName", "inline": true},
+        {"name": "Effects", "value": "Shiny Boost", "inline": false},
+        {"name": "Position", "value": "overworld 120, 65, -318", "inline": false}
+      ],
+      "footer": {"text": "Cobble Monitor"},
+      "timestamp": "2026-08-03T00:00:00Z"
+    }
+  ]
+}
+```
+
+이벤트별 기본 표현:
+
+| 이벤트 | 제목 | 기본 색상 | 주요 필드 |
+|---|---|---:|---|
+| Night | 🌙 Night Started | 남색 | 시간, 차원 |
+| Pasture Egg | 🥚 Pasture Egg Created | 초록색 | 종족, 알 개수, 목장 위치 |
+| Snack | 🍪 Snack Consumed | 주황색 | 포켓몬, 레벨, Shiny, 설치자, 효과, 스낵 위치 |
+
+메타데이터를 확인하지 못한 경우에는 임의의 값을 넣지 않는다. 예를 들어 포켓몬을
+위치 기반으로 찾은 경우에는 `Estimated Pokemon`을 별도 필드로 표시한다.
+
+Embed 생성은 NotificationService에서 이벤트 타입별 Formatter로 분리한다.
+
+```text
+Event Metadata
+    -> NotificationFormatter
+        -> DiscordEmbedPayload
+        -> ntfyPlainTextPayload
+```
+
+Discord 필드 값은 길이 제한을 적용하고, 외부 서비스 요청 실패가 게임 스레드에
+영향을 주지 않도록 기존 비동기 HTTP 전송 구조를 유지한다.
+
 ## 서버 확장 시 해결되는 문제
 
 향후 서버에도 보조 모드를 설치할 수 있게 되면 다음 전용 Payload를 추가한다.
