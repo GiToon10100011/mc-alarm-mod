@@ -74,6 +74,8 @@ public final class CobbleMonitorCommands {
                                                                 ))))))
                                 .then(ClientCommandManager.literal("list")
                                         .executes(context -> list(configManager)))
+                                .then(ClientCommandManager.literal("inspect")
+                                        .executes(context -> inspectLooking(configManager)))
                                 .then(ClientCommandManager.literal("clear")
                                         .executes(context -> clear(configManager)))
                         )
@@ -87,6 +89,7 @@ public final class CobbleMonitorCommands {
         feedback("/cobble-monitor pasture add <x> <y> <z>");
         feedback("/cobble-monitor pasture remove <x> <y> <z>");
         feedback("/cobble-monitor pasture list");
+        feedback("/cobble-monitor pasture inspect");
         feedback("/cobble-monitor pasture clear");
         feedback("/cobble-monitor config discord <url>");
         feedback("/cobble-monitor config ntfy <topic>");
@@ -102,6 +105,7 @@ public final class CobbleMonitorCommands {
         feedback("/cobble-monitor pasture add <x> <y> <z>");
         feedback("Remove one: /cobble-monitor pasture remove <x> <y> <z>");
         feedback("Show all: /cobble-monitor pasture list");
+        feedback("Inspect the block you are looking at: /cobble-monitor pasture inspect");
         feedback("Remove all: /cobble-monitor pasture clear");
         feedback("Only registered pastures are monitored.");
         return 1;
@@ -233,6 +237,31 @@ public final class CobbleMonitorCommands {
             feedback("- " + pasture.dimension + " " + pasture.x + " " + pasture.y + " " + pasture.z
                     + " (registered by " + pasture.registeredByName + ")");
         }
+        return 1;
+    }
+
+    private static int inspectLooking(ConfigManager configManager) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null || client.player == null
+                || !(client.crosshairTarget instanceof net.minecraft.util.hit.BlockHitResult hit)) {
+            return failure("Look at a pasture block first.");
+        }
+
+        BlockPos pos = hit.getBlockPos();
+        if (!PastureEggNotifier.isPastureBlock(client.world, pos)) {
+            return failure("The block you are looking at is not a Cobblemon pasture.");
+        }
+
+        String dimension = client.world.getRegistryKey().getValue().toString();
+        feedback("Pasture position: " + dimension + " " + pos.toShortString());
+        for (ConfigManager.MonitoredPasture pasture : configManager.getConfig().monitoredPastures) {
+            if (pasture.sameLocation(dimension, pos.getX(), pos.getY(), pos.getZ())) {
+                feedback("Monitoring: enabled (registered by " + pasture.registeredByName + ")");
+                return 1;
+            }
+        }
+        feedback("Monitoring: not registered");
+        feedback("Register it with: /cobble-monitor pasture add looking");
         return 1;
     }
 

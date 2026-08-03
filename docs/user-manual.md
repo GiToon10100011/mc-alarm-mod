@@ -155,6 +155,7 @@ ntfy는 모바일 알림 목록에 맞춰 제목과 간단한 메타데이터를
 
 ```text
 /cobble-monitor pasture list
+/cobble-monitor pasture inspect
 ```
 
 각 목장은 차원과 BlockPos로 구분된다. 따라서 여러 목장을 동시에 등록해도 서로
