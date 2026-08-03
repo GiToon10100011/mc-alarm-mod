@@ -1,0 +1,9 @@
+# Changelog
+
+## 1.1.0
+
+- Added configurable day notifications alongside night notifications.
+- Restricted day/night monitoring to the Overworld.
+- Added in-game configuration commands for Discord, ntfy, and event toggles.
+- Added pasture inspection and improved Overworld re-entry time checks.
+- Added English README documentation.
