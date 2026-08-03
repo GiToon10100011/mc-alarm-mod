@@ -65,6 +65,8 @@ Discord Webhook URL 또는 ntfy topic을 입력하고 해당 기능을 활성화
 /cobble-monitor config ntfy clear
 /cobble-monitor config event night <on|off>
 /cobble-monitor config event day <on|off>
+/cobble-monitor debug status
+/cobble-monitor debug notify <night|day>
 /cobble-monitor reload
 ```
 
@@ -90,7 +92,7 @@ consumption, then sends notifications to Discord Webhooks and/or ntfy.
 1. Install Fabric Loader, Fabric API, and Java 21.
 2. Install `Cobblemon-fabric-1.7.3+1.21.1.jar` for Cobblemon features.
 3. Install `Cobbreeding-fabric-2.2.2.jar` for pasture egg monitoring.
-4. Put `cobble-monitor-1.1.0.jar` in the instance `mods` folder.
+4. Put `cobble-monitor-1.1.1.jar` in the instance `mods` folder.
 5. Do not put the `sources.jar` file in the `mods` folder.
 
 The mod is client-side only. It does not need to be installed on the server.
@@ -156,6 +158,20 @@ required. To enable or disable it, change `events.snackConsumed` in the config
 file and run `/cobble-monitor reload`.
 
 Use `/cobble-monitor help` in-game for the complete command list.
+
+### Debugging
+
+Use the following commands to separate event detection issues from HTTP delivery issues:
+
+```text
+/cobble-monitor debug status
+/cobble-monitor debug notify night
+/cobble-monitor debug notify day
+```
+
+`debug status` never displays the actual Webhook URL or ntfy topic. Check the
+client `latest.log` for `Night detected`, `Day detected`, `Discord notification
+sent`, `ntfy notification sent`, or `Failed to send notification`.
 
 ## Snack monitoring commands
 

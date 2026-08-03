@@ -8,11 +8,13 @@ import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /** Main client entrypoint for Cobble Monitor. */
 public final class CobbleMonitorClient implements ClientModInitializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.LOGGER_NAME);
+    private static CobbleMonitorClient activeInstance;
 
     private static SnackMonitorProvider snackMonitorProvider;
 
@@ -26,6 +28,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        activeInstance = this;
         configManager = new ConfigManager();
         configManager.load();
         config = configManager.getConfig();
@@ -138,5 +141,64 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         if (snackMonitorProvider != null) {
             snackMonitorProvider.handlePacket(packet);
         }
+    }
+
+    /** Returns runtime diagnostics without exposing notification credentials. */
+    public static List<String> debugStatusLines() {
+        if (activeInstance == null || activeInstance.config == null) {
+            return List.of("Cobble Monitor is not initialized.");
+        }
+
+        ConfigManager.Config config = activeInstance.config;
+        MinecraftClient client = MinecraftClient.getInstance();
+        String dimension = client.world == null
+                ? "none"
+                : client.world.getRegistryKey().getValue().toString();
+        String time = client.world == null
+                ? "none"
+                : String.valueOf(client.world.getTimeOfDay() % 24000L);
+        boolean overworld = client.world != null
+                && World.OVERWORLD.equals(client.world.getRegistryKey());
+        String version = FabricLoader.getInstance()
+                .getModContainer("cobble-monitor")
+                .map(container -> container.getMetadata().getVersion().getFriendlyString())
+                .orElse("unknown");
+
+        return List.of(
+                "Cobble Monitor debug status:",
+                "Version: " + version,
+                "World: " + (client.world == null ? "not connected" : "connected"),
+                "Dimension: " + dimension + " (Overworld eligible: " + overworld + ")",
+                "Time: " + time + " / nightTime=" + config.nightTime + ", resetTime=" + config.resetTime,
+                "Events: night=" + config.events.night + ", day=" + config.events.day,
+                "State: nightNotified=" + activeInstance.nightNotified
+                        + ", dayNotified=" + activeInstance.dayNotified,
+                "Discord: enabled=" + config.enableDiscord
+                        + ", configured=" + !config.discordWebhook.isBlank(),
+                "ntfy: enabled=" + config.enableNtfy
+                        + ", configured=" + !config.ntfyTopic.isBlank()
+        );
+    }
+
+    /** Sends a deliberate test notification through the configured destinations. */
+    public static boolean sendDebugNotification(String eventName) {
+        if (activeInstance == null || activeInstance.notificationService == null) {
+            return false;
+        }
+
+        NotificationService.EventType eventType = switch (eventName) {
+            case "night" -> NotificationService.EventType.NIGHT;
+            case "day" -> NotificationService.EventType.DAY;
+            default -> null;
+        };
+        if (eventType == null) {
+            return false;
+        }
+
+        activeInstance.notificationService.notify(eventType, Map.of(
+                "Source", "Manual debug command"
+        ));
+        LOGGER.info("Debug notification requested: {}", eventName);
+        return true;
     }
 }

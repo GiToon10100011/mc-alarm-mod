@@ -54,6 +54,15 @@ public final class CobbleMonitorCommands {
                                                         .executes(context -> setEventEnabled(configManager, "day", true)))
                                                 .then(ClientCommandManager.literal("off")
                                                         .executes(context -> setEventEnabled(configManager, "day", false))))))
+                        .then(ClientCommandManager.literal("debug")
+                                .executes(context -> debugStatus())
+                                .then(ClientCommandManager.literal("status")
+                                        .executes(context -> debugStatus()))
+                                .then(ClientCommandManager.literal("notify")
+                                        .then(ClientCommandManager.literal("night")
+                                                .executes(context -> debugNotification("night")))
+                                        .then(ClientCommandManager.literal("day")
+                                                .executes(context -> debugNotification("day")))))
                         .then(ClientCommandManager.literal("reload")
                                 .executes(context -> {
                                     reloadAction.run();
@@ -106,6 +115,8 @@ public final class CobbleMonitorCommands {
         feedback("/cobble-monitor config ntfy <topic>");
         feedback("/cobble-monitor config event night <on|off>");
         feedback("/cobble-monitor config event day <on|off>");
+        feedback("/cobble-monitor debug status");
+        feedback("/cobble-monitor debug notify <night|day>");
         feedback("/cobble-monitor reload");
         return 1;
     }
@@ -196,6 +207,20 @@ public final class CobbleMonitorCommands {
         }
         configManager.save();
         return success(event + " monitoring " + (enabled ? "enabled" : "disabled") + ".");
+    }
+
+    private static int debugStatus() {
+        for (String line : CobbleMonitorClient.debugStatusLines()) {
+            feedback(line);
+        }
+        return 1;
+    }
+
+    private static int debugNotification(String event) {
+        if (!CobbleMonitorClient.sendDebugNotification(event)) {
+            return failure("Could not request debug notification.");
+        }
+        return success("Debug " + event + " notification requested. Check Discord/ntfy and latest.log.");
     }
 
     private static int addLooking(ConfigManager configManager) {

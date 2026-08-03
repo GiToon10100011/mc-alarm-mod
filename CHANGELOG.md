@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+- Added in-game debug status diagnostics.
+- Added manual night/day notification test commands.
+- Added guidance for checking client logs and separating detection from delivery issues.
+
 ## 1.1.0
 
 - Added configurable day notifications alongside night notifications.

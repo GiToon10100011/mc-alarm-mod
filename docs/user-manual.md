@@ -19,7 +19,7 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 ## 2. 설치
 
 1. Fabric Loader 0.16.5 이상과 Fabric API를 설치한다.
-2. `cobble-monitor-1.1.0.jar`를 클라이언트의 `mods` 폴더에 넣는다.
+2. `cobble-monitor-1.1.1.jar`를 클라이언트의 `mods` 폴더에 넣는다.
 3. 기존 `nightnotifier` JAR이 있으면 중복 실행을 막기 위해 제거한다.
 4. Cobblemon 기능을 사용할 경우 Cobblemon 1.7.3을 설치한다.
 5. 목장 알을 감시할 경우 Cobbreeding 2.2.2도 설치한다.
@@ -66,6 +66,20 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 ```text
 /cobble-monitor reload
 ```
+
+## 디버깅 명령어
+
+알림이 오지 않을 때 다음 명령어로 감지와 HTTP 전송을 분리해서 확인할 수 있다.
+
+```text
+/cobble-monitor debug status
+/cobble-monitor debug notify night
+/cobble-monitor debug notify day
+```
+
+`debug status`는 Webhook URL과 ntfy topic의 실제 값을 표시하지 않는다. 클라이언트
+`latest.log`에서 `Night detected`, `Day detected`, `Discord notification sent`,
+`ntfy notification sent`, `Failed to send notification` 로그를 확인한다.
 
 밤/낮 감시는 게임을 재시작하지 않고 다음 명령어로 즉시 켜고 끌 수 있다.
 
