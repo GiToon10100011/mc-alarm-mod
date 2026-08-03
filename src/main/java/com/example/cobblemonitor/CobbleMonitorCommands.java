@@ -128,6 +128,7 @@ public final class CobbleMonitorCommands {
         feedback("Notifications:");
         feedback("Night: detected when world time reaches nightTime.");
         feedback("Day: detected when world time reaches resetTime.");
+        feedback("Day/night monitoring is limited to the Overworld.");
         feedback("Pasture Egg: detected when HAS_EGG changes false -> true.");
         feedback("Snack: detected from Cobblemon's snack S2C packet.");
         feedback("Discord uses Embed cards; ntfy uses plain text.");

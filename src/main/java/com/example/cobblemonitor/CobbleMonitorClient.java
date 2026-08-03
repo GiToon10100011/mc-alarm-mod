@@ -4,6 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,11 +67,20 @@ public final class CobbleMonitorClient implements ClientModInitializer {
 
         if (world != lastWorld) {
             lastWorld = world;
-            nightNotified = false;
-            dayNotified = false;
+            synchronizeTimeNotificationState(world);
             if (pastureEggNotifier != null) {
                 pastureEggNotifier.resetWorldState();
             }
+        }
+
+        if (!World.OVERWORLD.equals(world.getRegistryKey())) {
+            if (pastureEggNotifier != null) {
+                pastureEggNotifier.tick(client);
+            }
+            if (snackMonitorProvider != null) {
+                snackMonitorProvider.tick(client);
+            }
+            return;
         }
 
         long timeOfDay = world.getTimeOfDay() % 24000L;
@@ -86,6 +96,8 @@ public final class CobbleMonitorClient implements ClientModInitializer {
                     ));
                 }
             }
+        } else if (timeOfDay >= config.nightTime) {
+            dayNotified = false;
         }
 
         if (timeOfDay >= config.nightTime && !nightNotified && config.events != null) {
@@ -105,6 +117,19 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         if (snackMonitorProvider != null) {
             snackMonitorProvider.tick(client);
         }
+    }
+
+    /** Initializes phase state after a world or dimension change without sending an alert. */
+    private void synchronizeTimeNotificationState(ClientWorld world) {
+        if (!World.OVERWORLD.equals(world.getRegistryKey())) {
+            nightNotified = true;
+            dayNotified = true;
+            return;
+        }
+
+        long timeOfDay = world.getTimeOfDay() % 24000L;
+        nightNotified = timeOfDay >= config.nightTime;
+        dayNotified = timeOfDay < config.resetTime;
     }
 
     private void reloadRuntimeConfiguration() {

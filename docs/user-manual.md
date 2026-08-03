@@ -76,6 +76,9 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 /cobble-monitor config event day off
 ```
 
+밤/낮 알림은 Overworld에서만 발생한다. 네더, 엔드, 레이드굴 등 다른 차원에서는
+시간을 감시하지 않으며, 차원을 이동할 때 현재 시간이 다시 알림으로 전송되지 않는다.
+
 ## 4. Discord Webhook 설정
 
 1. Discord 서버에서 알림을 받을 채널을 연다.

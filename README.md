@@ -133,6 +133,8 @@ Night and day monitoring can be toggled immediately with:
 
 The default day notification threshold is `resetTime` (1000), and the default
 night notification threshold is `nightTime` (13000).
+Day/night notifications are sent only in the Overworld; Nether, End, and other
+dimensions do not trigger these alerts.
 
 ### Pasture monitoring
 
