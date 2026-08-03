@@ -28,6 +28,7 @@ public final class PastureEggNotifier {
     private static final String HAS_EGG_PROPERTY = "has_egg";
     private static final String PART_PROPERTY = "part";
     private static final String TOP_PART = "top";
+    private static final int LOOK_TARGET_VERTICAL_FALLBACK = 2;
 
     private final ConfigManager configManager;
     private NotificationService notificationService;
@@ -163,6 +164,28 @@ public final class PastureEggNotifier {
         return pos;
     }
 
+    /**
+     * Resolves a pasture near a command raycast position when the client reports
+     * an air/miss position for the pasture's multi-block model.
+     */
+    public static BlockPos resolvePastureBaseNearLookTarget(ClientWorld world, BlockPos pos) {
+        BlockPos exact = resolvePastureBase(world, pos);
+        if (exact != null) {
+            return exact;
+        }
+
+        for (int offset = -LOOK_TARGET_VERTICAL_FALLBACK; offset <= LOOK_TARGET_VERTICAL_FALLBACK; offset++) {
+            if (offset == 0) {
+                continue;
+            }
+            BlockPos candidate = resolvePastureBase(world, pos.add(0, offset, 0));
+            if (candidate != null) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
     /** Produces safe, local diagnostics for a looked-at pasture block. */
     public List<String> debugAt(ClientWorld world, BlockPos lookedPos) {
         List<String> lines = new ArrayList<>();
@@ -173,7 +196,7 @@ public final class PastureEggNotifier {
         lines.add("Looked part=" + readProperty(lookedState, PART_PROPERTY)
                 + ", has_egg=" + readProperty(lookedState, HAS_EGG_PROPERTY));
 
-        BlockPos base = resolvePastureBase(world, lookedPos);
+        BlockPos base = resolvePastureBaseNearLookTarget(world, lookedPos);
         if (base == null) {
             lines.add("Resolved base: unavailable (look at a Cobblemon pasture block)");
             return lines;
@@ -191,7 +214,8 @@ public final class PastureEggNotifier {
             return base.equals(targetBase);
         });
 
-        lines.add("Resolved base: " + base.toShortString());
+        lines.add("Resolved base: " + base.toShortString()
+                + (base.equals(lookedPos) ? "" : " (vertical fallback)"));
         lines.add("Base part=" + readProperty(baseState, PART_PROPERTY)
                 + ", has_egg=" + hasEgg);
         BlockEntity blockEntity = world.getBlockEntity(base);

@@ -264,7 +264,7 @@ public final class CobbleMonitorCommands {
         if (client.world == null || client.player == null) {
             return failure("A world must be loaded to register a pasture.");
         }
-        BlockPos basePos = PastureEggNotifier.resolvePastureBase(client.world, pos);
+        BlockPos basePos = PastureEggNotifier.resolvePastureBaseNearLookTarget(client.world, pos);
         if (basePos == null) {
             return failure("The selected block is not a Cobblemon pasture.");
         }
@@ -333,7 +333,7 @@ public final class CobbleMonitorCommands {
         }
 
         BlockPos pos = hit.getBlockPos();
-        BlockPos basePos = PastureEggNotifier.resolvePastureBase(client.world, pos);
+        BlockPos basePos = PastureEggNotifier.resolvePastureBaseNearLookTarget(client.world, pos);
         if (basePos == null) {
             return failure("The block you are looking at is not a Cobblemon pasture.");
         }

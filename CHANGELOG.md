@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+
+- Added a narrow vertical fallback for pasture command raycast misses.
+
 ## 1.2.0
 
 - Normalized both halves of Cobblemon pastures to the bottom BlockEntity position.

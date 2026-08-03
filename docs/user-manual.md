@@ -19,7 +19,7 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 ## 2. 설치
 
 1. Fabric Loader 0.16.5 이상과 Fabric API를 설치한다.
-2. `cobble-monitor-1.2.0.jar`를 클라이언트의 `mods` 폴더에 넣는다.
+2. `cobble-monitor-1.2.1.jar`를 클라이언트의 `mods` 폴더에 넣는다.
 3. 기존 `nightnotifier` JAR이 있으면 중복 실행을 막기 위해 제거한다.
 4. Cobblemon 기능을 사용할 경우 Cobblemon 1.7.3을 설치한다.
 5. 목장 알을 감시할 경우 Cobbreeding 2.2.2도 설치한다.
@@ -89,6 +89,8 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 좌표, `has_egg`, BlockEntity, 동기화된 알 메타데이터를 출력한다. `debug snack`은
 Cobblemon 스낵 패킷 수신 횟수·중복 제거·대기열을 보여준다. `debug notify snack`은
 Webhook 전송만 시험하며 실제 스낵 패킷 수신 여부는 `debug snack`으로 확인한다.
+목장 외형의 빈 공간이 조준 좌표로 잡히는 경우에는 같은 X/Z에서 위·아래 2블록까지
+목장 블록을 찾아 아래쪽 기준 좌표로 보정한다.
 
 밤/낮 감시는 게임을 재시작하지 않고 다음 명령어로 즉시 켜고 끌 수 있다.
 
