@@ -40,8 +40,8 @@ below.
 
 1. Install Fabric Loader and Fabric API.
 2. Install Cobblemon, and Cobbreeding if you use pasture egg monitoring.
-3. Put `cobble-monitor-1.4.0.jar` in the instance `mods` folder.
-4. Do **not** put `cobble-monitor-1.4.0-sources.jar` in `mods`.
+3. Put `cobble-monitor-1.4.1.jar` in the instance `mods` folder.
+4. Do **not** put `cobble-monitor-1.4.1-sources.jar` in `mods`.
 5. Start the game once. The config is created at
    `.minecraft/config/cobble-monitor.json`.
 
@@ -159,6 +159,8 @@ seen players can still be named while offline.
 `debug pasture` reports the resolved pasture position, `has_egg`, synced egg
 metadata, parent species, and possible egg species. `debug notify` tests only
 the configured Discord/ntfy delivery; it does not simulate a Cobblemon packet.
+When `HAS_EGG` is true but the client has no egg ItemStacks, `Egg Count` is
+shown as unavailable rather than the misleading value `0`.
 
 ## Search terms
 

@@ -91,7 +91,7 @@ public final class PastureEggNotifier {
     }
 
     private void onEggCreated(ClientWorld world, BlockPos pos, ConfigManager.MonitoredPasture target) {
-        EggMetadata metadata = readEggMetadata(world, pos);
+        EggMetadata metadata = readEggMetadata(world, pos, true);
 
         LOGGER.info("Pasture detected using BlockState");
         Map<String, Object> fields = new java.util.LinkedHashMap<>();
@@ -114,7 +114,7 @@ public final class PastureEggNotifier {
         notificationService.notify(NotificationService.EventType.PASTURE_EGG, fields);
     }
 
-    private EggMetadata readEggMetadata(ClientWorld world, BlockPos pos) {
+    private EggMetadata readEggMetadata(ClientWorld world, BlockPos pos, boolean eggExpected) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
         ParentMetadata parents = readPastureParents(blockEntity);
         if (!(blockEntity instanceof PastureInventory inventory)) {
@@ -137,7 +137,11 @@ public final class PastureEggNotifier {
                 LOGGER.debug("Could not read pasture egg metadata", exception);
             }
         }
-        return new EggMetadata(species, eggCount, true, parents);
+        boolean inventoryContentsSynced = !eggExpected || eggCount > 0;
+        if (eggExpected && !inventoryContentsSynced) {
+            LOGGER.debug("Pasture at {} has HAS_EGG=true but no egg ItemStacks were synchronized to the client", pos);
+        }
+        return new EggMetadata(species, eggCount, inventoryContentsSynced, parents);
     }
 
     /**
@@ -149,6 +153,7 @@ public final class PastureEggNotifier {
             return ParentMetadata.unavailable();
         }
 
+        int tetheredEntryCount = pasture.getTetheredPokemon().size();
         try {
             List<Pokemon> parents = BreedingUtilities.getPokemon(pasture.getTetheredPokemon());
             Set<String> parentSpecies = new LinkedHashSet<>();
@@ -157,10 +162,10 @@ public final class PastureEggNotifier {
             }
 
             Set<String> possibleSpecies = readPossibleEggSpecies(parents);
-            return new ParentMetadata(parentSpecies, possibleSpecies, true);
+            return new ParentMetadata(parentSpecies, possibleSpecies, tetheredEntryCount, parents.size(), true);
         } catch (ReflectiveOperationException | RuntimeException exception) {
             LOGGER.debug("Could not infer pasture egg species from tethered Pokemon", exception);
-            return ParentMetadata.unavailable();
+            return new ParentMetadata(Set.of(), Set.of(), tetheredEntryCount, 0, false);
         }
     }
 
@@ -188,14 +193,14 @@ public final class PastureEggNotifier {
 
     private void addInferredEggSpecies(Map<String, Object> fields, EggMetadata metadata, BlockPos pos) {
         ParentMetadata parents = metadata.parents;
-        if (parents.synced && parents.possibleEggSpecies.size() == 1) {
+        if (parents.usable && parents.possibleEggSpecies.size() == 1) {
             String species = parents.possibleEggSpecies.iterator().next();
             LOGGER.info("Pasture egg species inferred from Cobbreeding parents at {}: {}", pos, species);
             fields.put("Species", species + " (inferred from parents)");
             addPokemonThumbnail(fields, species);
             return;
         }
-        if (parents.synced && !parents.possibleEggSpecies.isEmpty()) {
+        if (parents.usable && !parents.possibleEggSpecies.isEmpty()) {
             fields.put("Possible Egg Species", String.join(", ", parents.possibleEggSpecies));
             return;
         }
@@ -293,7 +298,7 @@ public final class PastureEggNotifier {
 
         BlockState baseState = world.getBlockState(base);
         Boolean hasEgg = readHasEgg(world, base);
-        EggMetadata metadata = readEggMetadata(world, base);
+        EggMetadata metadata = readEggMetadata(world, base, Boolean.TRUE.equals(hasEgg));
         String key = world.getRegistryKey().getValue() + ":" + base.toShortString();
         boolean registered = configManager.getConfig().monitoredPastures.stream().anyMatch(target -> {
             if (!world.getRegistryKey().getValue().toString().equals(target.dimension)) {
@@ -315,6 +320,9 @@ public final class PastureEggNotifier {
         lines.add("Pasture parents=" + (metadata.parents.species.isEmpty()
                 ? "unavailable"
                 : String.join(", ", metadata.parents.species)));
+        lines.add("Tethered entries=" + metadata.parents.tetheredEntryCount
+                + ", resolved Pokemon=" + metadata.parents.resolvedPokemonCount
+                + ", parent data usable=" + metadata.parents.usable);
         lines.add("Possible egg species=" + (metadata.parents.possibleEggSpecies.isEmpty()
                 ? "unavailable"
                 : String.join(", ", metadata.parents.possibleEggSpecies)));
@@ -347,10 +355,12 @@ public final class PastureEggNotifier {
     private record ParentMetadata(
             Set<String> species,
             Set<String> possibleEggSpecies,
-            boolean synced
+            int tetheredEntryCount,
+            int resolvedPokemonCount,
+            boolean usable
     ) {
         private static ParentMetadata unavailable() {
-            return new ParentMetadata(Set.of(), Set.of(), false);
+            return new ParentMetadata(Set.of(), Set.of(), 0, 0, false);
         }
     }
 }

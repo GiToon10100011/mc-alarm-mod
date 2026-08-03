@@ -8,7 +8,7 @@ client; the server does not need the mod.
 1. Install Fabric Loader 0.16.5+, Fabric API, and Java 21 for Minecraft 1.21.1.
 2. Install Cobblemon 1.7.3 for Cobblemon features.
 3. Install Cobbreeding 2.2.2 for pasture egg monitoring.
-4. Install `cobble-monitor-1.4.0.jar` in the instance `mods` folder.
+4. Install `cobble-monitor-1.4.1.jar` in the instance `mods` folder.
 5. Do not install the `-sources.jar` file.
 
 The first launch creates `.minecraft/config/cobble-monitor.json`.
@@ -88,7 +88,10 @@ For a new egg, the alert follows this order:
    add its Discord pixel-sprite thumbnail.
 4. If several species are possible, list candidates and do not choose a sprite.
 
-`/cobble-monitor debug pasture` shows the parent species and possible results.
+`/cobble-monitor debug pasture` shows the parent species, possible results,
+tethered-entry count, and resolved Pokemon count. If `HAS_EGG` is true but the
+client has not received egg ItemStacks, the alert intentionally shows Egg Count
+as unavailable rather than incorrectly reporting `0`.
 
 ## Poke Snack monitoring
 
