@@ -23,8 +23,8 @@ public final class ConfigManager {
     private static final int MAX_CACHED_PLAYER_NAMES = 2048;
     private static final Logger LOGGER = LoggerFactory.getLogger(LOGGER_NAME);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final String DEFAULT_DAY_MESSAGE = "☀️ Minecraft에서 낮이 시작되었습니다.";
-    private static final String DEFAULT_NIGHT_MESSAGE = "🌙 Minecraft에서 밤이 시작되었습니다.";
+    private static final String DEFAULT_DAY_MESSAGE = "☀️ Minecraft day has started.";
+    private static final String DEFAULT_NIGHT_MESSAGE = "🌙 Minecraft night has started.";
 
     private final Path configPath;
     private final Path legacyConfigPath;
@@ -124,6 +124,7 @@ public final class ConfigManager {
         migrated.nightTime = legacy.nightTime;
         migrated.resetTime = legacy.resetTime;
         migrated.messages.night = legacy.message;
+        migrated.useGameLanguageMessages = false;
         migrated.normalize();
         return migrated;
     }
@@ -135,6 +136,7 @@ public final class ConfigManager {
         public String ntfyTopic = "";
         public int nightTime = 13000;
         public int resetTime = 1000;
+        public boolean useGameLanguageMessages = true;
         public Events events = new Events();
         public Messages messages = new Messages();
         public String pastureMonitorMode = "selected";

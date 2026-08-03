@@ -2,6 +2,7 @@ package com.example.cobblemonitor;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.minecraft.client.MinecraftClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /** Sends event notifications asynchronously to Discord and ntfy. */
@@ -59,11 +61,31 @@ public final class NotificationService {
     }
 
     private String messageFor(EventType eventType) {
+        if (config.useGameLanguageMessages) {
+            return localizedMessageFor(eventType);
+        }
         return switch (eventType) {
             case NIGHT -> config.messages.night;
             case DAY -> config.messages.day;
             case PASTURE_EGG -> config.messages.pastureEgg;
             case SNACK_CONSUMED -> config.messages.snackConsumed;
+        };
+    }
+
+    private static String localizedMessageFor(EventType eventType) {
+        if (usesKoreanLanguage()) {
+            return switch (eventType) {
+                case NIGHT -> "🌙 Minecraft에서 밤이 시작되었습니다.";
+                case DAY -> "☀️ Minecraft에서 낮이 시작되었습니다.";
+                case PASTURE_EGG -> "🥚 목장 알 생성";
+                case SNACK_CONSUMED -> "🍪 포케스낵 소비";
+            };
+        }
+        return switch (eventType) {
+            case NIGHT -> "🌙 Minecraft night has started.";
+            case DAY -> "☀️ Minecraft day has started.";
+            case PASTURE_EGG -> "🥚 Pasture Egg Created";
+            case SNACK_CONSUMED -> "🍪 Snack Consumed";
         };
     }
 
@@ -177,12 +199,27 @@ public final class NotificationService {
     }
 
     private static String descriptionFor(EventType eventType) {
+        if (usesKoreanLanguage()) {
+            return switch (eventType) {
+                case NIGHT -> "Minecraft 세계에서 밤이 시작되었습니다.";
+                case DAY -> "Minecraft 세계에서 낮이 시작되었습니다.";
+                case PASTURE_EGG -> "감시 중인 목장에서 새 알을 감지했습니다.";
+                case SNACK_CONSUMED -> "야생 포켓몬이 포케스낵을 소비했습니다.";
+            };
+        }
         return switch (eventType) {
             case NIGHT -> "Minecraft night has started.";
             case DAY -> "Minecraft day has started.";
             case PASTURE_EGG -> "A new egg was detected in a monitored pasture.";
             case SNACK_CONSUMED -> "A wild Pokemon consumed a Poke Snack.";
         };
+    }
+
+    private static boolean usesKoreanLanguage() {
+        String languageCode = MinecraftClient.getInstance()
+                .getLanguageManager()
+                .getLanguage();
+        return languageCode.toLowerCase(Locale.ROOT).startsWith("ko");
     }
 
     private static int colorFor(EventType eventType) {

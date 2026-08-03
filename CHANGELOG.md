@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0
+
+- Made English the primary README and documentation language.
+- Added Minecraft-language-aware English/Korean notification titles and descriptions.
+- Added a Reddit post draft and GitHub search-discovery checklist.
+
 ## 1.3.0
 
 - Infer a pasture egg's species from Cobbreeding's actual possible-egg calculation when egg NBT is not synchronized.

@@ -3,7 +3,7 @@
   "id": "cobble-monitor",
   "version": "${version}",
   "name": "Cobble Monitor",
-  "description": "Client-side Minecraft event monitor with Discord and ntfy notifications.",
+  "description": "Client-side Fabric 1.21.1 Cobblemon monitor with Discord Webhook and ntfy notifications for pasture eggs, Poke Snacks, day, and night.",
   "authors": [
     "GiToon10100011"
   ],

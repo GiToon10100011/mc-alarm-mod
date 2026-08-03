@@ -1,21 +1,77 @@
-# Cobble Monitor
+# Cobble Monitor — Cobblemon Discord Webhook & ntfy Notifications
 
-Fabric 1.21.1용 순수 클라이언트 모드입니다. 월드 밤 시작, 선택한 Cobblemon 목장의 알 생성, Poke Snack 소비를 Discord Webhook과 ntfy로 알립니다.
+Cobble Monitor is a **client-side Minecraft Fabric 1.21.1 mod** for Cobblemon
+players who want Discord Webhook or ntfy push notifications without installing
+anything on their server. It works on vanilla-compatible servers and is designed
+for Cobblemon modpacks such as Cobbleverse.
 
-전체 설치 절차와 명령어 설명은 [상세 사용자 매뉴얼](docs/user-manual.md)을 참고하세요.
+**English documentation is primary.** Korean documentation remains available
+below.
 
-## 요구 사항
+- [Full user manual (English)](docs/user-manual.en.md)
+- [사용자 매뉴얼 (한국어)](docs/user-manual.md)
+- [Cobblemon monitoring roadmap](docs/cobblemon-monitor-roadmap.md)
+- [Reddit post draft](docs/reddit-post.md)
+- [GitHub discovery checklist](docs/github-discovery-checklist.md)
+
+## Features
+
+- Discord Webhook embeds and ntfy mobile notifications
+- Asynchronous Java 21 `HttpClient.sendAsync()` delivery — no blocking game thread
+- Configurable Overworld-only day and night alerts
+- Selected Cobblemon pasture egg monitoring with no server-side installation
+- Pasture egg species from synced egg data, with safe parent-based inference when
+  the egg inventory is not synced
+- Poke Snack consumption alerts from Cobblemon's client packet
+- Pokemon pixel-sprite thumbnails in Discord embeds, including shiny Snack targets
+- Offline snack placer names cached locally after the client has seen them
+- In-game configuration, help, diagnostics, and manual notification tests
+
+## Requirements
 
 - Minecraft 1.21.1
-- Fabric Loader 0.16.5 이상
+- Fabric Loader 0.16.5+
 - Fabric API
 - Java 21
-- Cobblemon 기능을 사용할 경우 Cobblemon 1.7.3
-- Pasture Egg 기능을 사용할 경우 Cobbreeding 2.2.2
+- Cobblemon 1.7.3 for Cobblemon features
+- Cobbreeding 2.2.2 for pasture egg monitoring
 
-## 설정
+## Install
 
-첫 실행 시 `.minecraft/config/cobble-monitor.json`이 자동 생성됩니다.
+1. Install Fabric Loader and Fabric API.
+2. Install Cobblemon, and Cobbreeding if you use pasture egg monitoring.
+3. Put `cobble-monitor-1.4.0.jar` in the instance `mods` folder.
+4. Do **not** put `cobble-monitor-1.4.0-sources.jar` in `mods`.
+5. Start the game once. The config is created at
+   `.minecraft/config/cobble-monitor.json`.
+
+Remove older Cobble Monitor or Night Notifier JARs so only one current version
+is installed.
+
+## Quick setup
+
+Set a Discord Webhook in-game — no restart or `/reload` is needed afterward:
+
+```text
+/cobble-monitor config discord <webhook-url>
+```
+
+Optional ntfy setup:
+
+```text
+/cobble-monitor config ntfy <topic>
+```
+
+Day and night alerts are disabled by default. Enable only the alerts you want:
+
+```text
+/cobble-monitor config event night on
+/cobble-monitor config event day on
+```
+
+Use `/cobble-monitor help` in-game for the full command list.
+
+## Example configuration
 
 ```json
 {
@@ -25,208 +81,77 @@ Fabric 1.21.1용 순수 클라이언트 모드입니다. 월드 밤 시작, 선�
   "ntfyTopic": "",
   "nightTime": 13000,
   "resetTime": 1000,
+  "useGameLanguageMessages": true,
   "events": {
     "night": false,
     "day": false,
-    "legendarySpawn": true,
-    "shinySpawn": true,
     "pastureEgg": true,
     "snackConsumed": true
   },
   "messages": {
-    "day": "☀️ Minecraft에서 낮이 시작되었습니다.",
-    "night": "🌙 Minecraft에서 밤이 시작되었습니다.",
-    "legendarySpawn": "⭐ Legendary Spawn",
-    "shinySpawn": "✨ Shiny Spawn",
+    "day": "☀️ Minecraft day has started.",
+    "night": "🌙 Minecraft night has started.",
     "pastureEgg": "🥚 Pasture Egg Created",
     "snackConsumed": "🍪 Snack Consumed"
-  },
-  "pastureMonitorMode": "selected",
-  "monitoredPastures": []
+  }
 }
 ```
 
-Discord Webhook URL 또는 ntfy topic을 입력하고 해당 기능을 활성화하면 됩니다. Discord는 이벤트별 Embed 카드로 전송하고 ntfy는 짧은 평문으로 전송합니다.
+`useGameLanguageMessages` is enabled by default. With Minecraft set to Korean,
+the embed title and description are Korean; other languages receive English.
+Set it to `false` to use the strings under `messages` unchanged.
 
-## 목장 감시 명령어
+## Cobblemon pasture egg monitoring
 
-클라이언트 명령어이므로 서버 설치 없이 사용할 수 있습니다.
+Register only the pastures you care about; the mod never scans every pasture or
+every Pokemon entity each tick.
 
 ```text
-/cobble-monitor pasture add looking
-/cobble-monitor pasture add <x> <y> <z>
-/cobble-monitor pasture remove <x> <y> <z>
-/cobble-monitor pasture list
 /cobble-monitor pasture inspect
-/cobble-monitor pasture clear
-/cobble-monitor config discord <url>
-/cobble-monitor config discord clear
-/cobble-monitor config ntfy <topic>
-/cobble-monitor config ntfy clear
-/cobble-monitor config event night <on|off>
-/cobble-monitor config event day <on|off>
+/cobble-monitor pasture add looking
+/cobble-monitor pasture list
+/cobble-monitor pasture remove <x> <y> <z>
+```
+
+Both halves of Cobblemon's two-block pasture resolve to its bottom BlockEntity,
+including the model's small air-gap raycast case.
+
+When an egg appears, Cobble Monitor first reads synced egg metadata. If that is
+unavailable, it reads the pasture's tethered Pokemon and calls Cobbreeding's own
+possible-egg calculation. A single result is shown as an inferred species with a
+Discord sprite thumbnail. Multiple valid results are listed as candidates rather
+than guessing a potentially wrong Pokemon.
+
+## Poke Snack monitoring
+
+Snack monitoring is automatic and does not require snack coordinates or manual
+registration. Cobble Monitor listens for Cobblemon's Snack client packet and
+performs a short, local nearest-Pokemon lookup only when that packet arrives.
+
+Discord embeds show the Pokemon species, level, shiny state, gender, position,
+and a normal or shiny pixel-sprite thumbnail. The snack placer is resolved from
+the current player list and then from a local UUID-to-name cache, so previously
+seen players can still be named while offline.
+
+## Diagnostics
+
+```text
 /cobble-monitor debug status
 /cobble-monitor debug pasture
 /cobble-monitor debug snack
 /cobble-monitor debug notify <night|day|pasture|snack>
-/cobble-monitor reload
 ```
 
-등록된 목장은 차원과 좌표로 구분되며, 명령어를 실행한 플레이어의 UUID와 닉네임이 `registeredBy` 정보로 저장됩니다.
+`debug pasture` reports the resolved pasture position, `has_egg`, synced egg
+metadata, parent species, and possible egg species. `debug notify` tests only
+the configured Discord/ntfy delivery; it does not simulate a Cobblemon packet.
 
-게임 안에서 사용법을 확인하려면 다음 명령어를 실행합니다.
+## Search terms
 
-```text
-/cobble-monitor help
-/cobble-monitor help pasture
-/cobble-monitor help notifications
-/cobble-monitor help config
-```
+Minecraft Fabric 1.21.1, Cobblemon mod, Cobbleverse, Discord Webhook,
+Discord notifications, ntfy, Poke Snack monitor, pasture egg notifier,
+Cobbreeding, client-side Minecraft mod, Pokemon spawn and event notifications.
 
-## English
+## License
 
-Cobble Monitor is a client-side Fabric mod for Minecraft 1.21.1. It monitors
-Minecraft night time, selected Cobblemon pastures, and Cobblemon Poke Snack
-consumption, then sends notifications to Discord Webhooks and/or ntfy.
-
-### Installation
-
-1. Install Fabric Loader, Fabric API, and Java 21.
-2. Install `Cobblemon-fabric-1.7.3+1.21.1.jar` for Cobblemon features.
-3. Install `Cobbreeding-fabric-2.2.2.jar` for pasture egg monitoring.
-4. Put `cobble-monitor-1.3.0.jar` in the instance `mods` folder.
-5. Do not put the `sources.jar` file in the `mods` folder.
-
-The mod is client-side only. It does not need to be installed on the server.
-
-### Configuration
-
-The configuration file is created automatically at:
-
-```text
-.minecraft/config/cobble-monitor.json
-```
-
-You can configure Discord and ntfy directly in the file, or use these client
-commands without restarting the game:
-
-```text
-/cobble-monitor config discord <webhook-url>
-/cobble-monitor config discord clear
-/cobble-monitor config ntfy <topic>
-/cobble-monitor config ntfy clear
-```
-
-If you edit the file manually, apply the changes with:
-
-```text
-/cobble-monitor reload
-```
-
-Webhook URLs are saved locally and should never be committed to GitHub or
-shared in screenshots and streams.
-
-Night and day monitoring can be toggled immediately with:
-
-```text
-/cobble-monitor config event night on
-/cobble-monitor config event night off
-/cobble-monitor config event day on
-/cobble-monitor config event day off
-```
-
-Day and night notifications are disabled by default in a newly generated
-configuration. Enable either one with the commands above. The default day
-notification threshold is `resetTime` (1000), and the default night notification
-threshold is `nightTime` (13000).
-Day/night notifications are sent only in the Overworld; Nether, End, and other
-dimensions do not trigger these alerts. When returning to the Overworld, the
-current time is checked and the matching day/night notification may be sent.
-
-### Pasture monitoring
-
-Look at a Cobblemon pasture and run:
-
-```text
-/cobble-monitor pasture inspect
-/cobble-monitor pasture add looking
-```
-
-`inspect` displays the dimension, coordinates, and monitoring status.
-Use `/cobble-monitor pasture list` to view all registered pastures.
-Both halves of Cobblemon's two-block pasture resolve to its bottom BlockEntity
-position, so `pasture add looking` is safe when looking at the top half. If the
-client raycast lands in the model's air gap, the command also checks up to two
-blocks above and below that target position for the pasture.
-
-When an egg is detected, its synced egg data is used first. If the client has
-not received that data, Cobbreeding's own possible-egg calculation is used with
-the pasture's tethered Pokemon. A single possible result is shown as an inferred
-species with its pixel-sprite thumbnail; multiple possible results are displayed
-as candidates without guessing one sprite. `debug pasture` also lists the
-detected parents and possible egg species.
-
-### Snack monitoring
-
-Poke Snack monitoring is automatic. No snack coordinates or registration are
-required. To enable or disable it, change `events.snackConsumed` in the config
-file and run `/cobble-monitor reload`.
-
-Snack embeds keep only readable gameplay details. The snack placer is resolved
-from the client player list when available. Names observed while connected are
-saved locally, so later snack alerts can identify that player while they are
-offline. Discord shows the consumed Pokemon's normal or shiny pixel sprite as
-a thumbnail.
-
-Use `/cobble-monitor help` in-game for the complete command list.
-
-### Debugging
-
-Use the following commands to separate event detection issues from HTTP delivery issues:
-
-```text
-/cobble-monitor debug status
-/cobble-monitor debug notify night
-/cobble-monitor debug notify day
-/cobble-monitor debug pasture
-/cobble-monitor debug snack
-/cobble-monitor debug notify pasture
-/cobble-monitor debug notify snack
-```
-
-`debug status` never displays the actual Webhook URL or ntfy topic. Check the
-client `latest.log` for `Night detected`, `Day detected`, `Discord notification
-sent`, `ntfy notification sent`, or `Failed to send notification`.
-`debug pasture` requires looking at a pasture and shows the looked block half,
-resolved bottom position, `has_egg` state, BlockEntity, and synced egg metadata.
-`debug snack` reports whether the Cobblemon snack packet was received; its manual
-notify command tests only the configured HTTP delivery, not packet reception.
-
-## Snack monitoring commands
-
-Snack monitoring is automatic. No snack coordinate or snack registration is required.
-
-```text
-/cobble-monitor help notifications
-```
-
-To disable snack notifications, set `events.snackConsumed` to `false` in
-`config/cobble-monitor.json`, then run:
-
-```text
-/cobble-monitor reload
-```
-
-Set it back to `true` and run the same reload command to enable snack notifications again.
-
-## 빌드
-
-```text
-gradlew build -PcobblemonJar="C:/path/to/Cobblemon-fabric-1.7.3+1.21.1.jar" -PcobbreedingJar="C:/path/to/Cobbreeding-fabric-2.2.2.jar"
-```
-
-생성된 JAR는 `build/libs/`에 있습니다. 이 모드는 클라이언트 전용이므로 서버에는 설치하지 않습니다.
-
-## 동작
-
-클라이언트 틱에서 월드 시간을 읽고 `nightTime` 이상이면서 해당 밤에 아직 알림을 보내지 않았을 때만 알림을 예약합니다. 목장 감시는 등록된 좌표만 확인하며, Snack 감시는 Cobblemon의 전용 S2C 패킷이 수신될 때만 주변 포켓몬을 짧게 조회합니다. HTTP 요청은 Java 21 `HttpClient.sendAsync()`로 실행되므로 게임 스레드를 블로킹하지 않습니다.
+MIT
