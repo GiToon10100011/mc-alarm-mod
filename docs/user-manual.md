@@ -51,7 +51,7 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
     "snackConsumed": true
   },
   "messages": {
-    "day": "Day has started in Minecraft.",
+    "day": "☀️ Minecraft에서 낮이 시작되었습니다.",
     "night": "🌙 Minecraft에서 밤이 시작되었습니다.",
     "pastureEgg": "🥚 Pasture Egg Created",
     "snackConsumed": "🍪 Snack Consumed"

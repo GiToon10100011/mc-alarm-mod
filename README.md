@@ -34,7 +34,7 @@ Fabric 1.21.1용 순수 클라이언트 모드입니다. 월드 밤 시작, 선�
     "snackConsumed": true
   },
   "messages": {
-    "day": "Day has started in Minecraft.",
+    "day": "☀️ Minecraft에서 낮이 시작되었습니다.",
     "night": "🌙 Minecraft에서 밤이 시작되었습니다.",
     "legendarySpawn": "⭐ Legendary Spawn",
     "shinySpawn": "✨ Shiny Spawn",

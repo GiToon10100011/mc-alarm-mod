@@ -19,7 +19,7 @@ public final class ConfigManager {
     public static final String LOGGER_NAME = "cobble-monitor";
     private static final Logger LOGGER = LoggerFactory.getLogger(LOGGER_NAME);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final String DEFAULT_DAY_MESSAGE = "Day has started in Minecraft.";
+    private static final String DEFAULT_DAY_MESSAGE = "☀️ Minecraft에서 낮이 시작되었습니다.";
     private static final String DEFAULT_NIGHT_MESSAGE = "🌙 Minecraft에서 밤이 시작되었습니다.";
 
     private final Path configPath;
