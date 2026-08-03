@@ -67,7 +67,8 @@ public final class CobbleMonitorClient implements ClientModInitializer {
 
         if (world != lastWorld) {
             lastWorld = world;
-            synchronizeTimeNotificationState(world);
+            nightNotified = false;
+            dayNotified = false;
             if (pastureEggNotifier != null) {
                 pastureEggNotifier.resetWorldState();
             }
@@ -117,19 +118,6 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         if (snackMonitorProvider != null) {
             snackMonitorProvider.tick(client);
         }
-    }
-
-    /** Initializes phase state after a world or dimension change without sending an alert. */
-    private void synchronizeTimeNotificationState(ClientWorld world) {
-        if (!World.OVERWORLD.equals(world.getRegistryKey())) {
-            nightNotified = true;
-            dayNotified = true;
-            return;
-        }
-
-        long timeOfDay = world.getTimeOfDay() % 24000L;
-        nightNotified = timeOfDay >= config.nightTime;
-        dayNotified = timeOfDay < config.resetTime;
     }
 
     private void reloadRuntimeConfiguration() {
