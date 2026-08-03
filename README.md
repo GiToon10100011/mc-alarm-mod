@@ -94,7 +94,7 @@ consumption, then sends notifications to Discord Webhooks and/or ntfy.
 1. Install Fabric Loader, Fabric API, and Java 21.
 2. Install `Cobblemon-fabric-1.7.3+1.21.1.jar` for Cobblemon features.
 3. Install `Cobbreeding-fabric-2.2.2.jar` for pasture egg monitoring.
-4. Put `cobble-monitor-1.2.1.jar` in the instance `mods` folder.
+4. Put `cobble-monitor-1.2.2.jar` in the instance `mods` folder.
 5. Do not put the `sources.jar` file in the `mods` folder.
 
 The mod is client-side only. It does not need to be installed on the server.
@@ -162,6 +162,10 @@ blocks above and below that target position for the pasture.
 Poke Snack monitoring is automatic. No snack coordinates or registration are
 required. To enable or disable it, change `events.snackConsumed` in the config
 file and run `/cobble-monitor reload`.
+
+Snack embeds keep only readable gameplay details. The snack placer is resolved
+from the client player list when available, and Discord shows the consumed
+Pokemon's normal or shiny pixel sprite as a thumbnail.
 
 Use `/cobble-monitor help` in-game for the complete command list.
 

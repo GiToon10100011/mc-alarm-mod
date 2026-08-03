@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2
+
+- Simplified Poke Snack embeds by removing raw effects, ingredient, and packet-source data.
+- Resolve snack placer UUIDs through the client player list and show a friendly fallback when unavailable.
+- Added a Discord thumbnail using the consumed Pokemon's standard or shiny sprite.
+
 ## 1.2.1
 
 - Added a narrow vertical fallback for pasture command raycast misses.

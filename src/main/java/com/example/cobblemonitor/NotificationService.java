@@ -17,6 +17,8 @@ import java.util.Map;
 
 /** Sends event notifications asynchronously to Discord and ntfy. */
 public final class NotificationService {
+    /** Internal metadata key for a Discord-only thumbnail. It is never rendered as a field. */
+    public static final String DISCORD_THUMBNAIL_URL = "_discordThumbnailUrl";
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.LOGGER_NAME);
     private static final int DISCORD_COLOR_NIGHT = 0x26356B;
     private static final int DISCORD_COLOR_DAY = 0xF1C40F;
@@ -76,6 +78,15 @@ public final class NotificationService {
             embed.addProperty("description", descriptionFor(eventType));
             embed.addProperty("color", colorFor(eventType));
 
+            Object thumbnailUrl = metadata.remove(DISCORD_THUMBNAIL_URL);
+            if (thumbnailUrl != null
+                    && !String.valueOf(thumbnailUrl).isBlank()
+                    && isValidThumbnailUrl(String.valueOf(thumbnailUrl))) {
+                JsonObject thumbnail = new JsonObject();
+                thumbnail.addProperty("url", thumbnailUrl.toString());
+                embed.add("thumbnail", thumbnail);
+            }
+
             JsonArray fields = new JsonArray();
             for (Map.Entry<String, Object> entry : metadata.entrySet()) {
                 if (entry.getValue() == null) {
@@ -120,6 +131,9 @@ public final class NotificationService {
             URI topicUri = validHttpUri("https://ntfy.sh/" + config.ntfyTopic.trim());
             StringBuilder message = new StringBuilder(title);
             for (Map.Entry<String, Object> entry : metadata.entrySet()) {
+                if (DISCORD_THUMBNAIL_URL.equals(entry.getKey())) {
+                    continue;
+                }
                 if (entry.getValue() != null && !String.valueOf(entry.getValue()).isBlank()) {
                     message.append('\n').append(entry.getKey()).append(": ").append(entry.getValue());
                 }
@@ -184,6 +198,15 @@ public final class NotificationService {
             case "Species", "Level", "Shiny", "Gender", "Owner", "Registered By" -> true;
             default -> false;
         };
+    }
+
+    private static boolean isValidThumbnailUrl(String value) {
+        try {
+            return validHttpUri(value).getHost() != null;
+        } catch (IllegalArgumentException exception) {
+            LOGGER.warn("Ignoring invalid Discord thumbnail URL");
+            return false;
+        }
     }
 
     private static String truncate(String value, int maxLength) {

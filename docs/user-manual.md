@@ -19,7 +19,7 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 ## 2. 설치
 
 1. Fabric Loader 0.16.5 이상과 Fabric API를 설치한다.
-2. `cobble-monitor-1.2.1.jar`를 클라이언트의 `mods` 폴더에 넣는다.
+2. `cobble-monitor-1.2.2.jar`를 클라이언트의 `mods` 폴더에 넣는다.
 3. 기존 `nightnotifier` JAR이 있으면 중복 실행을 막기 위해 제거한다.
 4. Cobblemon 기능을 사용할 경우 Cobblemon 1.7.3을 설치한다.
 5. 목장 알을 감시할 경우 Cobbreeding 2.2.2도 설치한다.
@@ -131,8 +131,9 @@ Discord 알림은 일반 텍스트가 아니라 Embed 카드로 전송된다.
 - 목장 알: 초록색 카드
 - Snack: 주황색 카드
 
-목장 위치, 등록자, 포켓몬, 레벨, Shiny, Gender, Snack 효과 등이 확인 가능한
-범위에서 각각의 필드로 표시된다.
+목장 위치, 등록자, 포켓몬, 레벨, Shiny, Gender 등이 각각의 필드로 표시된다.
+Snack 알림은 읽기 어려운 원시 효과·재료·패킷 정보는 제외하며, Discord에는 소비한
+포켓몬의 일반/이로치 픽셀 스프라이트가 썸네일로 표시된다.
 
 Webhook URL은 비밀번호처럼 취급한다. URL을 공개 저장소나 채팅에 올리지 않는다.
 

@@ -208,9 +208,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
             return false;
         }
 
-        activeInstance.notificationService.notify(eventType, Map.of(
-                "Source", "Manual debug command"
-        ));
+        activeInstance.notificationService.notify(eventType, Map.of());
         LOGGER.info("Debug notification requested: {}", eventName);
         return true;
     }

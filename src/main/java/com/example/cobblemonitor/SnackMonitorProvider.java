@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.block.entity.PokeSnackBlockEntity;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -143,7 +144,6 @@ public final class SnackMonitorProvider {
             fields.put("Pokemon Detection", "Estimated Pokemon could not be resolved");
         }
         fields.put("Snack Position", pending.world.getRegistryKey().getValue() + " " + pending.blockPos.toShortString());
-        fields.put("Source", "Cobblemon S2C packet");
         notificationService.notify(NotificationService.EventType.SNACK_CONSUMED, fields);
         lastResolution = pokemonEntity == null
                 ? "notification sent with unresolved Pokemon"
@@ -166,22 +166,20 @@ public final class SnackMonitorProvider {
         UUID placedBy = snack.getPlacedBy();
         if (placedBy != null) {
             String name = resolvePlayerName(client, placedBy);
-            fields.put("Placed By", name == null ? placedBy : name);
-        }
-
-        String effects = String.valueOf(snack.getBaitEffects());
-        if (!effects.isBlank() && !"null".equalsIgnoreCase(effects)) {
-            fields.put("Effects", effects);
-        }
-
-        if (snack.getIngredientComponent() != null) {
-            fields.put("Ingredients", String.valueOf(snack.getIngredientComponent()));
+            fields.put("Placed By", name == null ? "Unknown or offline player" : name);
         }
     }
 
     private static String resolvePlayerName(MinecraftClient client, UUID uuid) {
         PlayerEntity player = client.world == null ? null : client.world.getPlayerByUuid(uuid);
-        return player == null ? null : player.getName().getString();
+        if (player != null) {
+            return player.getName().getString();
+        }
+        if (client.getNetworkHandler() == null) {
+            return null;
+        }
+        PlayerListEntry entry = client.getNetworkHandler().getPlayerListEntry(uuid);
+        return entry == null ? null : entry.getProfile().getName();
     }
 
     private static void addPokemonMetadata(Map<String, Object> fields, PokemonEntity entity) {
@@ -192,6 +190,23 @@ public final class SnackMonitorProvider {
         fields.put("Gender", String.valueOf(pokemon.getGender()));
         fields.put("UUID", entity.getUuidAsString());
         fields.put("Pokemon Position", entity.getBlockPos().toShortString());
+        fields.put(
+                NotificationService.DISCORD_THUMBNAIL_URL,
+                pokemonSpriteUrl(pokemon.getSpecies().getNationalPokedexNumber(), pokemon.getShiny())
+        );
+    }
+
+    /**
+     * Returns PokeAPI's standard pixel sprite URL for Discord to fetch directly.
+     * Cobblemon ships model textures, not standalone sprite assets suitable for an embed.
+     */
+    private static String pokemonSpriteUrl(int nationalPokedexNumber, boolean shiny) {
+        if (nationalPokedexNumber <= 0) {
+            return "";
+        }
+        String variantPath = shiny ? "shiny/" : "";
+        return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
+                + variantPath + nationalPokedexNumber + ".png";
     }
 
     private static final class PendingSnack {

@@ -103,7 +103,6 @@ public final class PastureEggNotifier {
         if (target.registeredByName != null && !target.registeredByName.isBlank()) {
             fields.put("Registered By", target.registeredByName);
         }
-        fields.put("Source", "BlockState + BlockEntity NBT");
         notificationService.notify(NotificationService.EventType.PASTURE_EGG, fields);
     }
 
