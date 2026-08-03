@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.4
+
+- Disabled day and night alerts by default for newly created configurations.
+
 ## 1.2.3
 
 - Persist client-observed player UUID-to-name mappings for readable offline snack placer names.

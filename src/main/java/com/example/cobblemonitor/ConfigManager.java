@@ -165,8 +165,8 @@ public final class ConfigManager {
     }
 
     public static final class Events {
-        public boolean night = true;
-        public boolean day = true;
+        public boolean night = false;
+        public boolean day = false;
         public boolean legendarySpawn = true;
         public boolean shinySpawn = true;
         public boolean pastureEgg = true;

@@ -26,8 +26,8 @@ Fabric 1.21.1용 순수 클라이언트 모드입니다. 월드 밤 시작, 선�
   "nightTime": 13000,
   "resetTime": 1000,
   "events": {
-    "night": true,
-    "day": true,
+    "night": false,
+    "day": false,
     "legendarySpawn": true,
     "shinySpawn": true,
     "pastureEgg": true,
@@ -94,7 +94,7 @@ consumption, then sends notifications to Discord Webhooks and/or ntfy.
 1. Install Fabric Loader, Fabric API, and Java 21.
 2. Install `Cobblemon-fabric-1.7.3+1.21.1.jar` for Cobblemon features.
 3. Install `Cobbreeding-fabric-2.2.2.jar` for pasture egg monitoring.
-4. Put `cobble-monitor-1.2.2.jar` in the instance `mods` folder.
+4. Put `cobble-monitor-1.2.4.jar` in the instance `mods` folder.
 5. Do not put the `sources.jar` file in the `mods` folder.
 
 The mod is client-side only. It does not need to be installed on the server.
@@ -135,8 +135,10 @@ Night and day monitoring can be toggled immediately with:
 /cobble-monitor config event day off
 ```
 
-The default day notification threshold is `resetTime` (1000), and the default
-night notification threshold is `nightTime` (13000).
+Day and night notifications are disabled by default in a newly generated
+configuration. Enable either one with the commands above. The default day
+notification threshold is `resetTime` (1000), and the default night notification
+threshold is `nightTime` (13000).
 Day/night notifications are sent only in the Overworld; Nether, End, and other
 dimensions do not trigger these alerts. When returning to the Overworld, the
 current time is checked and the matching day/night notification may be sent.

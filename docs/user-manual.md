@@ -19,7 +19,7 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 ## 2. 설치
 
 1. Fabric Loader 0.16.5 이상과 Fabric API를 설치한다.
-2. `cobble-monitor-1.2.2.jar`를 클라이언트의 `mods` 폴더에 넣는다.
+2. `cobble-monitor-1.2.4.jar`를 클라이언트의 `mods` 폴더에 넣는다.
 3. 기존 `nightnotifier` JAR이 있으면 중복 실행을 막기 위해 제거한다.
 4. Cobblemon 기능을 사용할 경우 Cobblemon 1.7.3을 설치한다.
 5. 목장 알을 감시할 경우 Cobbreeding 2.2.2도 설치한다.
@@ -45,8 +45,8 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
   "nightTime": 13000,
   "resetTime": 1000,
   "events": {
-    "night": true,
-    "day": true,
+    "night": false,
+    "day": false,
     "pastureEgg": true,
     "snackConsumed": true
   },
@@ -100,6 +100,9 @@ Webhook 전송만 시험하며 실제 스낵 패킷 수신 여부는 `debug snac
 /cobble-monitor config event day on
 /cobble-monitor config event day off
 ```
+
+새로 생성되는 설정에서는 낮/밤 알림이 기본 비활성화되어 있다. 원하는 항목만 위
+명령어의 `on`으로 켜면 된다.
 
 밤/낮 알림은 Overworld에서만 발생한다. 네더, 엔드, 레이드굴 등 다른 차원에서는
 시간을 감시하지 않는다. Overworld로 돌아오면 현재 시간을 다시 확인하여 낮/밤에
