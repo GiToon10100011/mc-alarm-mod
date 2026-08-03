@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.3
+
+- Retain OpenPasturePacket species identifiers so Ditto and same-species parent pairs reliably infer an egg species and Discord sprite.
+
 ## 1.5.2
 
 - Removed implementation-oriented `HAS_EGG` transition wording from the pasture registration message.

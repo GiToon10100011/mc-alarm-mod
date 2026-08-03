@@ -17,6 +17,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.block.entity.BlockEntity;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ public final class PastureEggNotifier {
     private final ConfigManager configManager;
     private NotificationService notificationService;
     private final Map<String, Boolean> observedStates = new java.util.HashMap<>();
-    private final Map<String, List<String>> guiCachedParents = new java.util.HashMap<>();
+    private final Map<String, List<CachedParentSpecies>> guiCachedParents = new java.util.HashMap<>();
     private String pendingGuiPastureKey;
     private long pendingGuiPastureExpiresAt;
     private String lastOpenPasturePacket = "none";
@@ -84,10 +85,13 @@ public final class PastureEggNotifier {
 
     /** Caches the parent species Cobblemon sends only while a pasture GUI is opened. */
     public void cacheOpenedPasture(ClientWorld world, OpenPasturePacket packet) {
+        List<CachedParentSpecies> parents = new ArrayList<>();
         List<String> species = new ArrayList<>();
         for (OpenPasturePacket.PasturePokemonDataDTO data : packet.getTetheredPokemon()) {
             Species resolved = PokemonSpecies.getByIdentifier(data.getSpecies());
-            species.add(resolved == null ? data.getSpecies().getPath() : resolved.getName());
+            String displayName = resolved == null ? data.getSpecies().getPath() : resolved.getName();
+            parents.add(new CachedParentSpecies(data.getSpecies(), displayName));
+            species.add(displayName);
         }
         lastOpenPasturePacket = "pastureId=" + packet.getPastureId()
                 + ", DTOs=" + species.size()
@@ -96,7 +100,7 @@ public final class PastureEggNotifier {
             lastOpenPastureCacheStatus = "ignored: no pending monitored pasture interaction";
             return;
         }
-        guiCachedParents.put(pendingGuiPastureKey, species);
+        guiCachedParents.put(pendingGuiPastureKey, parents);
         LOGGER.info("Cached {} pasture parent species from OpenPasturePacket", species.size());
         lastOpenPastureCacheStatus = "cached for " + pendingGuiPastureKey;
         pendingGuiPastureKey = null;
@@ -204,7 +208,9 @@ public final class PastureEggNotifier {
      * gender, form, and egg-group rules in this client mod.
      */
     private ParentMetadata readPastureParents(ClientWorld world, BlockPos pos, BlockEntity blockEntity) {
-        List<String> cachedParents = guiCachedParents.get(pastureKey(world.getRegistryKey().getValue().toString(), pos));
+        List<CachedParentSpecies> cachedParents = guiCachedParents.get(
+                pastureKey(world.getRegistryKey().getValue().toString(), pos)
+        );
         if (!(blockEntity instanceof PokemonPastureBlockEntity pasture)) {
             return fromGuiParentCache(cachedParents);
         }
@@ -229,16 +235,21 @@ public final class PastureEggNotifier {
     }
 
     /** Uses GUI-cached species only when the current BlockEntity has no parent data. */
-    private static ParentMetadata fromGuiParentCache(List<String> cachedParents) {
+    private static ParentMetadata fromGuiParentCache(List<CachedParentSpecies> cachedParents) {
         return fromGuiParentCache(cachedParents, 0);
     }
 
-    private static ParentMetadata fromGuiParentCache(List<String> cachedParents, int tetheredEntryCount) {
+    private static ParentMetadata fromGuiParentCache(
+            List<CachedParentSpecies> cachedParents,
+            int tetheredEntryCount
+    ) {
         if (cachedParents == null || cachedParents.isEmpty()) {
             return new ParentMetadata(Set.of(), Set.of(), tetheredEntryCount, 0, false, "unavailable");
         }
         return new ParentMetadata(
-                new LinkedHashSet<>(cachedParents),
+                cachedParents.stream()
+                        .map(CachedParentSpecies::displayName)
+                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)),
                 inferEggSpeciesFromGuiParents(cachedParents),
                 tetheredEntryCount,
                 cachedParents.size(),
@@ -252,7 +263,7 @@ public final class PastureEggNotifier {
      * one non-Ditto species paired with Ditto, or a same-species pair. The egg's
      * existence is already confirmed by HAS_EGG before this metadata is used.
      */
-    private static Set<String> inferEggSpeciesFromGuiParents(List<String> parentNames) {
+    private static Set<String> inferEggSpeciesFromGuiParents(List<CachedParentSpecies> parentNames) {
         // A full pasture may contain more residents than the actual breeding pair.
         // Do not guess an egg species unless the GUI reports exactly the two parents.
         if (parentNames.size() != 2) {
@@ -261,8 +272,8 @@ public final class PastureEggNotifier {
         Set<Species> parentSpecies = new LinkedHashSet<>();
         Set<Species> nonDitto = new LinkedHashSet<>();
         boolean hasDitto = false;
-        for (String parentName : parentNames) {
-            Species species = PokemonSpecies.getByName(parentName);
+        for (CachedParentSpecies parent : parentNames) {
+            Species species = PokemonSpecies.getByIdentifier(parent.speciesId());
             if (species == null) {
                 return Set.of();
             }
@@ -274,11 +285,24 @@ public final class PastureEggNotifier {
             }
         }
         boolean sameSpeciesPair = parentSpecies.size() == 1 && !hasDitto;
+        if (nonDitto.isEmpty() && hasDitto && parentSpecies.size() == 1) {
+            return Set.of(parentNames.getFirst().displayName());
+        }
         if (nonDitto.size() != 1 || (!hasDitto && !sameSpeciesPair)) {
             return Set.of();
         }
-        FormData baby = BreedingUtilities.INSTANCE.getBaby(nonDitto.iterator().next().getStandardForm());
-        return baby == null || baby.getSpecies() == null ? Set.of() : Set.of(baby.getSpecies().getName());
+        Species breedingSpecies = nonDitto.iterator().next();
+        try {
+            FormData baby = BreedingUtilities.INSTANCE.getBaby(breedingSpecies.getStandardForm());
+            if (baby != null && baby.getSpecies() != null) {
+                return Set.of(baby.getSpecies().getName());
+            }
+        } catch (RuntimeException exception) {
+            LOGGER.debug("Could not resolve the baby species for cached pasture parents", exception);
+        }
+        // The server confirmed HAS_EGG. Preserve a useful, deterministic result
+        // even if Cobbreeding's baby lookup cannot resolve a special form.
+        return Set.of(breedingSpecies.getName());
     }
 
     /**
@@ -542,5 +566,9 @@ public final class PastureEggNotifier {
         private static ParentMetadata unavailable() {
             return new ParentMetadata(Set.of(), Set.of(), 0, 0, false, "unavailable");
         }
+    }
+
+    /** Preserves the exact server-provided identifier alongside its display name. */
+    private record CachedParentSpecies(Identifier speciesId, String displayName) {
     }
 }
