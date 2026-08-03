@@ -19,6 +19,7 @@ import java.util.Map;
 public final class NotificationService {
     /** Internal metadata key for a Discord-only thumbnail. It is never rendered as a field. */
     public static final String DISCORD_THUMBNAIL_URL = "_discordThumbnailUrl";
+    private static final String POKEAPI_SPRITE_BASE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/";
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.LOGGER_NAME);
     private static final int DISCORD_COLOR_NIGHT = 0x26356B;
     private static final int DISCORD_COLOR_DAY = 0xF1C40F;
@@ -207,6 +208,15 @@ public final class NotificationService {
             LOGGER.warn("Ignoring invalid Discord thumbnail URL");
             return false;
         }
+    }
+
+    /** Returns PokeAPI's standard pixel sprite URL for Discord to fetch directly. */
+    public static String pokemonSpriteUrl(int nationalPokedexNumber, boolean shiny) {
+        if (nationalPokedexNumber <= 0) {
+            return "";
+        }
+        String variantPath = shiny ? "shiny/" : "";
+        return POKEAPI_SPRITE_BASE_URL + variantPath + nationalPokedexNumber + ".png";
     }
 
     private static String truncate(String value, int maxLength) {

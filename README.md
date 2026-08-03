@@ -94,7 +94,7 @@ consumption, then sends notifications to Discord Webhooks and/or ntfy.
 1. Install Fabric Loader, Fabric API, and Java 21.
 2. Install `Cobblemon-fabric-1.7.3+1.21.1.jar` for Cobblemon features.
 3. Install `Cobbreeding-fabric-2.2.2.jar` for pasture egg monitoring.
-4. Put `cobble-monitor-1.2.4.jar` in the instance `mods` folder.
+4. Put `cobble-monitor-1.3.0.jar` in the instance `mods` folder.
 5. Do not put the `sources.jar` file in the `mods` folder.
 
 The mod is client-side only. It does not need to be installed on the server.
@@ -158,6 +158,13 @@ Both halves of Cobblemon's two-block pasture resolve to its bottom BlockEntity
 position, so `pasture add looking` is safe when looking at the top half. If the
 client raycast lands in the model's air gap, the command also checks up to two
 blocks above and below that target position for the pasture.
+
+When an egg is detected, its synced egg data is used first. If the client has
+not received that data, Cobbreeding's own possible-egg calculation is used with
+the pasture's tethered Pokemon. A single possible result is shown as an inferred
+species with its pixel-sprite thumbnail; multiple possible results are displayed
+as candidates without guessing one sprite. `debug pasture` also lists the
+detected parents and possible egg species.
 
 ### Snack monitoring
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+- Infer a pasture egg's species from Cobbreeding's actual possible-egg calculation when egg NBT is not synchronized.
+- Show detected pasture parents and possible egg species in pasture diagnostics.
+- Add the inferred or exact pasture egg Pokemon sprite as a Discord thumbnail.
+
 ## 1.2.4
 
 - Disabled day and night alerts by default for newly created configurations.

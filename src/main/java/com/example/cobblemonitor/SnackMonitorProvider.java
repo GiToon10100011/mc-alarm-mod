@@ -198,21 +198,11 @@ public final class SnackMonitorProvider {
         fields.put("Pokemon Position", entity.getBlockPos().toShortString());
         fields.put(
                 NotificationService.DISCORD_THUMBNAIL_URL,
-                pokemonSpriteUrl(pokemon.getSpecies().getNationalPokedexNumber(), pokemon.getShiny())
+                NotificationService.pokemonSpriteUrl(
+                        pokemon.getSpecies().getNationalPokedexNumber(),
+                        pokemon.getShiny()
+                )
         );
-    }
-
-    /**
-     * Returns PokeAPI's standard pixel sprite URL for Discord to fetch directly.
-     * Cobblemon ships model textures, not standalone sprite assets suitable for an embed.
-     */
-    private static String pokemonSpriteUrl(int nationalPokedexNumber, boolean shiny) {
-        if (nationalPokedexNumber <= 0) {
-            return "";
-        }
-        String variantPath = shiny ? "shiny/" : "";
-        return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
-                + variantPath + nationalPokedexNumber + ".png";
     }
 
     private static final class PendingSnack {

@@ -1,6 +1,12 @@
 package com.example.cobblemonitor;
 
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
+import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
+import com.cobblemon.mod.common.block.entity.PokemonPastureBlockEntity;
+import com.cobblemon.mod.common.pokemon.FormData;
+import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.cobblemon.mod.common.pokemon.Species;
+import ludichat.cobbreeding.BreedingUtilities;
 import ludichat.cobbreeding.EggUtilities;
 import ludichat.cobbreeding.PastureInventory;
 import net.minecraft.block.BlockState;
@@ -90,13 +96,15 @@ public final class PastureEggNotifier {
         LOGGER.info("Pasture detected using BlockState");
         Map<String, Object> fields = new java.util.LinkedHashMap<>();
         if (metadata.species.isEmpty()) {
-            String reason = metadata.inventorySynced
-                    ? "egg metadata unavailable"
-                    : "pasture inventory not synchronized";
-            LOGGER.warn("Pasture egg detected at {}, but species is unavailable: {}", pos, reason);
-            fields.put("Species", "Unavailable (" + reason + ")");
+            addInferredEggSpecies(fields, metadata, pos);
         } else {
             fields.put("Species", String.join(", ", metadata.species));
+            if (metadata.species.size() == 1) {
+                addPokemonThumbnail(fields, metadata.species.iterator().next());
+            }
+        }
+        if (!metadata.parents.species.isEmpty()) {
+            fields.put("Parents", String.join(" + ", metadata.parents.species));
         }
         fields.put("Egg Count", metadata.inventorySynced ? metadata.eggCount : "Unavailable");
         fields.put("Pasture", world.getRegistryKey().getValue() + " " + pos.toShortString());
@@ -108,8 +116,9 @@ public final class PastureEggNotifier {
 
     private EggMetadata readEggMetadata(ClientWorld world, BlockPos pos) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
+        ParentMetadata parents = readPastureParents(blockEntity);
         if (!(blockEntity instanceof PastureInventory inventory)) {
-            return new EggMetadata(Set.of(), 0, false);
+            return new EggMetadata(Set.of(), 0, false, parents);
         }
 
         Set<String> species = new LinkedHashSet<>();
@@ -128,7 +137,88 @@ public final class PastureEggNotifier {
                 LOGGER.debug("Could not read pasture egg metadata", exception);
             }
         }
-        return new EggMetadata(species, eggCount, true);
+        return new EggMetadata(species, eggCount, true, parents);
+    }
+
+    /**
+     * Uses Cobbreeding's own possible-egg calculation instead of duplicating Ditto,
+     * gender, form, and egg-group rules in this client mod.
+     */
+    private ParentMetadata readPastureParents(BlockEntity blockEntity) {
+        if (!(blockEntity instanceof PokemonPastureBlockEntity pasture)) {
+            return ParentMetadata.unavailable();
+        }
+
+        try {
+            List<Pokemon> parents = BreedingUtilities.getPokemon(pasture.getTetheredPokemon());
+            Set<String> parentSpecies = new LinkedHashSet<>();
+            for (Pokemon parent : parents) {
+                parentSpecies.add(parent.getSpecies().getName());
+            }
+
+            Set<String> possibleSpecies = readPossibleEggSpecies(parents);
+            return new ParentMetadata(parentSpecies, possibleSpecies, true);
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            LOGGER.debug("Could not infer pasture egg species from tethered Pokemon", exception);
+            return ParentMetadata.unavailable();
+        }
+    }
+
+    /**
+     * Cobbreeding's public Java signature exposes Kotlin Pair in its generic
+     * return type. Read only the FormData map keys reflectively so this optional
+     * integration remains compile-only and does not bundle Kotlin dependencies.
+     */
+    private static Set<String> readPossibleEggSpecies(List<Pokemon> parents) throws ReflectiveOperationException {
+        Object candidates = BreedingUtilities.class
+                .getMethod("getPossibleEggs", List.class)
+                .invoke(null, parents);
+        Set<String> possibleSpecies = new LinkedHashSet<>();
+        if (!(candidates instanceof Iterable<?> entries)) {
+            return possibleSpecies;
+        }
+        for (Object candidate : entries) {
+            if (candidate instanceof Map.Entry<?, ?> entry && entry.getKey() instanceof FormData form
+                    && form.getSpecies() != null) {
+                possibleSpecies.add(form.getSpecies().getName());
+            }
+        }
+        return possibleSpecies;
+    }
+
+    private void addInferredEggSpecies(Map<String, Object> fields, EggMetadata metadata, BlockPos pos) {
+        ParentMetadata parents = metadata.parents;
+        if (parents.synced && parents.possibleEggSpecies.size() == 1) {
+            String species = parents.possibleEggSpecies.iterator().next();
+            LOGGER.info("Pasture egg species inferred from Cobbreeding parents at {}: {}", pos, species);
+            fields.put("Species", species + " (inferred from parents)");
+            addPokemonThumbnail(fields, species);
+            return;
+        }
+        if (parents.synced && !parents.possibleEggSpecies.isEmpty()) {
+            fields.put("Possible Egg Species", String.join(", ", parents.possibleEggSpecies));
+            return;
+        }
+
+        String reason = metadata.inventorySynced
+                ? "egg metadata unavailable"
+                : "pasture inventory not synchronized";
+        LOGGER.warn("Pasture egg detected at {}, but species is unavailable: {}", pos, reason);
+        fields.put("Species", "Unavailable (" + reason + ")");
+    }
+
+    private static void addPokemonThumbnail(Map<String, Object> fields, String speciesName) {
+        try {
+            Species species = PokemonSpecies.getByName(speciesName);
+            if (species != null) {
+                fields.put(
+                        NotificationService.DISCORD_THUMBNAIL_URL,
+                        NotificationService.pokemonSpriteUrl(species.getNationalPokedexNumber(), false)
+                );
+            }
+        } catch (RuntimeException exception) {
+            LOGGER.debug("Could not resolve a PokeAPI sprite for egg species {}", speciesName, exception);
+        }
     }
 
     private static Boolean readHasEgg(ClientWorld world, BlockPos pos) {
@@ -222,6 +312,12 @@ public final class PastureEggNotifier {
         lines.add("Inventory synced=" + metadata.inventorySynced
                 + ", eggCount=" + metadata.eggCount
                 + ", species=" + (metadata.species.isEmpty() ? "unavailable" : String.join(", ", metadata.species)));
+        lines.add("Pasture parents=" + (metadata.parents.species.isEmpty()
+                ? "unavailable"
+                : String.join(", ", metadata.parents.species)));
+        lines.add("Possible egg species=" + (metadata.parents.possibleEggSpecies.isEmpty()
+                ? "unavailable"
+                : String.join(", ", metadata.parents.possibleEggSpecies)));
         lines.add("Monitoring: " + registered + ", observed has_egg=" + observedStates.get(key));
         return lines;
     }
@@ -240,6 +336,21 @@ public final class PastureEggNotifier {
         return "unavailable";
     }
 
-    private record EggMetadata(Set<String> species, int eggCount, boolean inventorySynced) {
+    private record EggMetadata(
+            Set<String> species,
+            int eggCount,
+            boolean inventorySynced,
+            ParentMetadata parents
+    ) {
+    }
+
+    private record ParentMetadata(
+            Set<String> species,
+            Set<String> possibleEggSpecies,
+            boolean synced
+    ) {
+        private static ParentMetadata unavailable() {
+            return new ParentMetadata(Set.of(), Set.of(), false);
+        }
     }
 }
