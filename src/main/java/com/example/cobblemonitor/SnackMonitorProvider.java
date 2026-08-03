@@ -170,16 +170,22 @@ public final class SnackMonitorProvider {
         }
     }
 
-    private static String resolvePlayerName(MinecraftClient client, UUID uuid) {
+    private String resolvePlayerName(MinecraftClient client, UUID uuid) {
         PlayerEntity player = client.world == null ? null : client.world.getPlayerByUuid(uuid);
         if (player != null) {
-            return player.getName().getString();
+            String name = player.getName().getString();
+            configManager.cachePlayerName(uuid, name);
+            return name;
         }
-        if (client.getNetworkHandler() == null) {
-            return null;
+        if (client.getNetworkHandler() != null) {
+            PlayerListEntry entry = client.getNetworkHandler().getPlayerListEntry(uuid);
+            if (entry != null) {
+                String name = entry.getProfile().getName();
+                configManager.cachePlayerName(uuid, name);
+                return name;
+            }
         }
-        PlayerListEntry entry = client.getNetworkHandler().getPlayerListEntry(uuid);
-        return entry == null ? null : entry.getProfile().getName();
+        return configManager.getCachedPlayerName(uuid);
     }
 
     private static void addPokemonMetadata(Map<String, Object> fields, PokemonEntity entity) {

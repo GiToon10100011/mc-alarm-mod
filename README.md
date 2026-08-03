@@ -164,8 +164,10 @@ required. To enable or disable it, change `events.snackConsumed` in the config
 file and run `/cobble-monitor reload`.
 
 Snack embeds keep only readable gameplay details. The snack placer is resolved
-from the client player list when available, and Discord shows the consumed
-Pokemon's normal or shiny pixel sprite as a thumbnail.
+from the client player list when available. Names observed while connected are
+saved locally, so later snack alerts can identify that player while they are
+offline. Discord shows the consumed Pokemon's normal or shiny pixel sprite as
+a thumbnail.
 
 Use `/cobble-monitor help` in-game for the complete command list.
 

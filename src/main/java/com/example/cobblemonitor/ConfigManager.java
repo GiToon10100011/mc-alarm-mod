@@ -12,11 +12,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /** Loads, migrates, and persists Cobble Monitor's client configuration. */
 public final class ConfigManager {
     public static final String LOGGER_NAME = "cobble-monitor";
+    private static final int MAX_CACHED_PLAYER_NAMES = 2048;
     private static final Logger LOGGER = LoggerFactory.getLogger(LOGGER_NAME);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String DEFAULT_DAY_MESSAGE = "☀️ Minecraft에서 낮이 시작되었습니다.";
@@ -83,6 +87,31 @@ public final class ConfigManager {
         }
     }
 
+    /** Stores a name observed by this client so an offline snack placer remains readable later. */
+    public boolean cachePlayerName(UUID uuid, String name) {
+        if (uuid == null || name == null || name.isBlank()) {
+            return false;
+        }
+        Map<String, String> names = getConfig().playerNameCache;
+        String uuidText = uuid.toString();
+        if (name.equals(names.get(uuidText))) {
+            return false;
+        }
+        names.put(uuidText, name);
+        while (names.size() > MAX_CACHED_PLAYER_NAMES) {
+            names.remove(names.keySet().iterator().next());
+        }
+        return true;
+    }
+
+    /** Returns a locally cached name only; this never queries an external service. */
+    public String getCachedPlayerName(UUID uuid) {
+        if (uuid == null) {
+            return null;
+        }
+        return getConfig().playerNameCache.get(uuid.toString());
+    }
+
     private Config migrateLegacyConfig(LegacyConfig legacy) {
         Config migrated = new Config();
         if (legacy == null) {
@@ -110,6 +139,7 @@ public final class ConfigManager {
         public Messages messages = new Messages();
         public String pastureMonitorMode = "selected";
         public List<MonitoredPasture> monitoredPastures = new ArrayList<>();
+        public Map<String, String> playerNameCache = new LinkedHashMap<>();
 
         private void normalize() {
             if (discordWebhook == null) discordWebhook = "";
@@ -122,7 +152,13 @@ public final class ConfigManager {
             if (messages.snackConsumed == null || messages.snackConsumed.isBlank()) messages.snackConsumed = "🍪 Snack Consumed";
             if (pastureMonitorMode == null || pastureMonitorMode.isBlank()) pastureMonitorMode = "selected";
             if (monitoredPastures == null) monitoredPastures = new ArrayList<>();
+            if (playerNameCache == null) playerNameCache = new LinkedHashMap<>();
             monitoredPastures.removeIf(pasture -> pasture == null || !pasture.isValid());
+            playerNameCache.entrySet().removeIf(entry -> entry.getKey() == null || entry.getKey().isBlank()
+                    || entry.getValue() == null || entry.getValue().isBlank());
+            while (playerNameCache.size() > MAX_CACHED_PLAYER_NAMES) {
+                playerNameCache.remove(playerNameCache.keySet().iterator().next());
+            }
             nightTime = Math.max(0, Math.min(23999, nightTime));
             resetTime = Math.max(0, Math.min(23999, resetTime));
         }

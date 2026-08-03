@@ -3,6 +3,7 @@ package com.example.cobblemonitor;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.world.World;
@@ -15,6 +16,7 @@ import java.util.Map;
 /** Main client entrypoint for Cobble Monitor. */
 public final class CobbleMonitorClient implements ClientModInitializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.LOGGER_NAME);
+    private static final int PLAYER_NAME_CACHE_REFRESH_INTERVAL_TICKS = 100;
     private static CobbleMonitorClient activeInstance;
 
     private static SnackMonitorProvider snackMonitorProvider;
@@ -27,6 +29,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
     private boolean nightNotified;
     private boolean dayNotified;
     private long lastOverworldTimeOfDay = -1L;
+    private int playerNameCacheRefreshTicks;
 
     @Override
     public void onInitializeClient() {
@@ -65,6 +68,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
             nightNotified = false;
             dayNotified = false;
             lastOverworldTimeOfDay = -1L;
+            playerNameCacheRefreshTicks = 0;
             if (snackMonitorProvider != null) {
                 snackMonitorProvider.tick(client);
             }
@@ -76,10 +80,13 @@ public final class CobbleMonitorClient implements ClientModInitializer {
             nightNotified = false;
             dayNotified = false;
             lastOverworldTimeOfDay = -1L;
+            playerNameCacheRefreshTicks = 0;
             if (pastureEggNotifier != null) {
                 pastureEggNotifier.resetWorldState();
             }
         }
+
+        cacheKnownPlayerNames(client);
 
         if (!World.OVERWORLD.equals(world.getRegistryKey())) {
             lastOverworldTimeOfDay = -1L;
@@ -131,6 +138,28 @@ public final class CobbleMonitorClient implements ClientModInitializer {
             snackMonitorProvider.tick(client);
         }
         lastOverworldTimeOfDay = timeOfDay;
+    }
+
+    /** Saves names exposed through the client tab list without scanning world entities. */
+    private void cacheKnownPlayerNames(MinecraftClient client) {
+        if (client.getNetworkHandler() == null) {
+            return;
+        }
+        if (playerNameCacheRefreshTicks-- > 0) {
+            return;
+        }
+        playerNameCacheRefreshTicks = PLAYER_NAME_CACHE_REFRESH_INTERVAL_TICKS;
+
+        boolean changed = false;
+        for (PlayerListEntry entry : client.getNetworkHandler().getPlayerList()) {
+            if (entry.getProfile().getId() != null) {
+                changed |= configManager.cachePlayerName(entry.getProfile().getId(), entry.getProfile().getName());
+            }
+        }
+        if (changed) {
+            configManager.save();
+            LOGGER.info("Updated local player-name cache");
+        }
     }
 
     private void reloadRuntimeConfiguration() {

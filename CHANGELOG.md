@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3
+
+- Persist client-observed player UUID-to-name mappings for readable offline snack placer names.
+
 ## 1.2.2
 
 - Simplified Poke Snack embeds by removing raw effects, ingredient, and packet-source data.
