@@ -21,6 +21,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
     private PastureEggNotifier pastureEggNotifier;
     private ClientWorld lastWorld;
     private boolean nightNotified;
+    private boolean dayNotified;
 
     @Override
     public void onInitializeClient() {
@@ -56,6 +57,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         if (world == null) {
             lastWorld = null;
             nightNotified = false;
+            dayNotified = false;
             if (snackMonitorProvider != null) {
                 snackMonitorProvider.tick(client);
             }
@@ -65,6 +67,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         if (world != lastWorld) {
             lastWorld = world;
             nightNotified = false;
+            dayNotified = false;
             if (pastureEggNotifier != null) {
                 pastureEggNotifier.resetWorldState();
             }
@@ -73,6 +76,16 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         long timeOfDay = world.getTimeOfDay() % 24000L;
         if (timeOfDay < config.resetTime) {
             nightNotified = false;
+            if (!dayNotified && config.events != null) {
+                dayNotified = true;
+                LOGGER.info("Day detected");
+                if (config.events.day) {
+                    notificationService.notify(NotificationService.EventType.DAY, Map.of(
+                            "Time", timeOfDay,
+                            "Dimension", world.getRegistryKey().getValue().toString()
+                    ));
+                }
+            }
         }
 
         if (timeOfDay >= config.nightTime && !nightNotified && config.events != null) {

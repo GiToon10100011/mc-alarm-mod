@@ -42,7 +42,18 @@ public final class CobbleMonitorCommands {
                                                         .executes(context -> setNtfyTopic(
                                                                 configManager,
                                                                 StringArgumentType.getString(context, "topic")
-                                                        )))))
+                                                        ))))
+                                .then(ClientCommandManager.literal("event")
+                                        .then(ClientCommandManager.literal("night")
+                                                .then(ClientCommandManager.literal("on")
+                                                        .executes(context -> setEventEnabled(configManager, "night", true)))
+                                                .then(ClientCommandManager.literal("off")
+                                                        .executes(context -> setEventEnabled(configManager, "night", false))))
+                                        .then(ClientCommandManager.literal("day")
+                                                .then(ClientCommandManager.literal("on")
+                                                        .executes(context -> setEventEnabled(configManager, "day", true)))
+                                                .then(ClientCommandManager.literal("off")
+                                                        .executes(context -> setEventEnabled(configManager, "day", false))))))
                         .then(ClientCommandManager.literal("reload")
                                 .executes(context -> {
                                     reloadAction.run();
@@ -93,6 +104,8 @@ public final class CobbleMonitorCommands {
         feedback("/cobble-monitor pasture clear");
         feedback("/cobble-monitor config discord <url>");
         feedback("/cobble-monitor config ntfy <topic>");
+        feedback("/cobble-monitor config event night <on|off>");
+        feedback("/cobble-monitor config event day <on|off>");
         feedback("/cobble-monitor reload");
         return 1;
     }
@@ -114,6 +127,7 @@ public final class CobbleMonitorCommands {
     private static int helpNotifications() {
         feedback("Notifications:");
         feedback("Night: detected when world time reaches nightTime.");
+        feedback("Day: detected when world time reaches resetTime.");
         feedback("Pasture Egg: detected when HAS_EGG changes false -> true.");
         feedback("Snack: detected from Cobblemon's snack S2C packet.");
         feedback("Discord uses Embed cards; ntfy uses plain text.");
@@ -129,6 +143,8 @@ public final class CobbleMonitorCommands {
         feedback("Clear Discord: /cobble-monitor config discord clear");
         feedback("Set ntfy: /cobble-monitor config ntfy <topic>");
         feedback("Clear ntfy: /cobble-monitor config ntfy clear");
+        feedback("Toggle night: /cobble-monitor config event night <on|off>");
+        feedback("Toggle day: /cobble-monitor config event day <on|off>");
         feedback("Webhook values are kept local and are never logged.");
         return 1;
     }
@@ -167,6 +183,18 @@ public final class CobbleMonitorCommands {
         configManager.getConfig().enableNtfy = false;
         configManager.save();
         return success("ntfy topic cleared and disabled.");
+    }
+
+    private static int setEventEnabled(ConfigManager configManager, String event, boolean enabled) {
+        if ("night".equals(event)) {
+            configManager.getConfig().events.night = enabled;
+        } else if ("day".equals(event)) {
+            configManager.getConfig().events.day = enabled;
+        } else {
+            return failure("Unknown event: " + event);
+        }
+        configManager.save();
+        return success(event + " monitoring " + (enabled ? "enabled" : "disabled") + ".");
     }
 
     private static int addLooking(ConfigManager configManager) {

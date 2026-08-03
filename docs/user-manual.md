@@ -46,10 +46,12 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
   "resetTime": 1000,
   "events": {
     "night": true,
+    "day": true,
     "pastureEgg": true,
     "snackConsumed": true
   },
   "messages": {
+    "day": "Day has started in Minecraft.",
     "night": "🌙 Minecraft에서 밤이 시작되었습니다.",
     "pastureEgg": "🥚 Pasture Egg Created",
     "snackConsumed": "🍪 Snack Consumed"
@@ -63,6 +65,15 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 
 ```text
 /cobble-monitor reload
+```
+
+밤/낮 감시는 게임을 재시작하지 않고 다음 명령어로 즉시 켜고 끌 수 있다.
+
+```text
+/cobble-monitor config event night on
+/cobble-monitor config event night off
+/cobble-monitor config event day on
+/cobble-monitor config event day off
 ```
 
 ## 4. Discord Webhook 설정

@@ -19,6 +19,7 @@ import java.util.Map;
 public final class NotificationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.LOGGER_NAME);
     private static final int DISCORD_COLOR_NIGHT = 0x26356B;
+    private static final int DISCORD_COLOR_DAY = 0xF1C40F;
     private static final int DISCORD_COLOR_EGG = 0x58B368;
     private static final int DISCORD_COLOR_SNACK = 0xF39C12;
 
@@ -57,6 +58,7 @@ public final class NotificationService {
     private String messageFor(EventType eventType) {
         return switch (eventType) {
             case NIGHT -> config.messages.night;
+            case DAY -> config.messages.day;
             case PASTURE_EGG -> config.messages.pastureEgg;
             case SNACK_CONSUMED -> config.messages.snackConsumed;
         };
@@ -162,6 +164,7 @@ public final class NotificationService {
     private static String descriptionFor(EventType eventType) {
         return switch (eventType) {
             case NIGHT -> "Minecraft night has started.";
+            case DAY -> "Minecraft day has started.";
             case PASTURE_EGG -> "A new egg was detected in a monitored pasture.";
             case SNACK_CONSUMED -> "A wild Pokemon consumed a Poke Snack.";
         };
@@ -170,6 +173,7 @@ public final class NotificationService {
     private static int colorFor(EventType eventType) {
         return switch (eventType) {
             case NIGHT -> DISCORD_COLOR_NIGHT;
+            case DAY -> DISCORD_COLOR_DAY;
             case PASTURE_EGG -> DISCORD_COLOR_EGG;
             case SNACK_CONSUMED -> DISCORD_COLOR_SNACK;
         };
@@ -191,6 +195,7 @@ public final class NotificationService {
 
     public enum EventType {
         NIGHT,
+        DAY,
         PASTURE_EGG,
         SNACK_CONSUMED
     }

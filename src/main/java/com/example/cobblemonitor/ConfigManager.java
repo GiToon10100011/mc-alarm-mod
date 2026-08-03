@@ -19,6 +19,7 @@ public final class ConfigManager {
     public static final String LOGGER_NAME = "cobble-monitor";
     private static final Logger LOGGER = LoggerFactory.getLogger(LOGGER_NAME);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final String DEFAULT_DAY_MESSAGE = "Day has started in Minecraft.";
     private static final String DEFAULT_NIGHT_MESSAGE = "🌙 Minecraft에서 밤이 시작되었습니다.";
 
     private final Path configPath;
@@ -115,6 +116,7 @@ public final class ConfigManager {
             if (ntfyTopic == null) ntfyTopic = "";
             if (events == null) events = new Events();
             if (messages == null) messages = new Messages();
+            if (messages.day == null || messages.day.isBlank()) messages.day = DEFAULT_DAY_MESSAGE;
             if (messages.night == null || messages.night.isBlank()) messages.night = DEFAULT_NIGHT_MESSAGE;
             if (messages.pastureEgg == null || messages.pastureEgg.isBlank()) messages.pastureEgg = "🥚 Pasture Egg Created";
             if (messages.snackConsumed == null || messages.snackConsumed.isBlank()) messages.snackConsumed = "🍪 Snack Consumed";
@@ -128,6 +130,7 @@ public final class ConfigManager {
 
     public static final class Events {
         public boolean night = true;
+        public boolean day = true;
         public boolean legendarySpawn = true;
         public boolean shinySpawn = true;
         public boolean pastureEgg = true;
@@ -136,6 +139,7 @@ public final class ConfigManager {
 
     public static final class Messages {
         public String night = DEFAULT_NIGHT_MESSAGE;
+        public String day = DEFAULT_DAY_MESSAGE;
         public String legendarySpawn = "⭐ Legendary Spawn";
         public String shinySpawn = "✨ Shiny Spawn";
         public String pastureEgg = "🥚 Pasture Egg Created";

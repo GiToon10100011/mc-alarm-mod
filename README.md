@@ -27,12 +27,14 @@ Fabric 1.21.1용 순수 클라이언트 모드입니다. 월드 밤 시작, 선�
   "resetTime": 1000,
   "events": {
     "night": true,
+    "day": true,
     "legendarySpawn": true,
     "shinySpawn": true,
     "pastureEgg": true,
     "snackConsumed": true
   },
   "messages": {
+    "day": "Day has started in Minecraft.",
     "night": "🌙 Minecraft에서 밤이 시작되었습니다.",
     "legendarySpawn": "⭐ Legendary Spawn",
     "shinySpawn": "✨ Shiny Spawn",
@@ -61,6 +63,8 @@ Discord Webhook URL 또는 ntfy topic을 입력하고 해당 기능을 활성화
 /cobble-monitor config discord clear
 /cobble-monitor config ntfy <topic>
 /cobble-monitor config ntfy clear
+/cobble-monitor config event night <on|off>
+/cobble-monitor config event day <on|off>
 /cobble-monitor reload
 ```
 
@@ -117,6 +121,18 @@ If you edit the file manually, apply the changes with:
 
 Webhook URLs are saved locally and should never be committed to GitHub or
 shared in screenshots and streams.
+
+Night and day monitoring can be toggled immediately with:
+
+```text
+/cobble-monitor config event night on
+/cobble-monitor config event night off
+/cobble-monitor config event day on
+/cobble-monitor config event day off
+```
+
+The default day notification threshold is `resetTime` (1000), and the default
+night notification threshold is `nightTime` (13000).
 
 ### Pasture monitoring
 
