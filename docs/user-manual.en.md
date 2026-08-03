@@ -95,6 +95,11 @@ GUI after changing the pasture Pokemon. A confirmed egg with a Ditto + one
 species or a same-species pair can then receive a conservative inferred species
 and sprite; other combinations keep the parent names without guessing.
 
+An egg alert still sends when this parent data is unavailable, and its metadata
+reminds you to open the pasture once for detailed information. Monitoring uses a
+`HAS_EGG` `false` to `true` transition; an egg already present when the client
+first observes the pasture is treated as its baseline to avoid duplicate alerts.
+
 `/cobble-monitor debug pasture` inspects all saved pasture registrations rather
 than the crosshair. It shows configured coordinates, chunk availability,
 resolved base, `HAS_EGG`, BlockEntity, local egg stacks, parent species,

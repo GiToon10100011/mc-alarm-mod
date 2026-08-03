@@ -144,6 +144,7 @@ public final class CobbleMonitorCommands {
         feedback("Inspect the block you are looking at: /cobble-monitor pasture inspect");
         feedback("Remove all: /cobble-monitor pasture clear");
         feedback("Only registered pastures are monitored.");
+        feedback("Open each registered pasture once to cache parent data for detailed egg alerts.");
         return 1;
     }
 
@@ -294,7 +295,7 @@ public final class CobbleMonitorCommands {
                 pasture.registeredByUuid = uuid;
                 pasture.registeredByName = name;
                 configManager.save();
-                return success("Pasture monitor updated at " + basePos.toShortString() + ".");
+                return pastureRegistered(basePos, true);
             }
         }
 
@@ -302,7 +303,15 @@ public final class CobbleMonitorCommands {
                 dimension, basePos.getX(), basePos.getY(), basePos.getZ(), uuid, name
         ));
         configManager.save();
-        return success("Pasture monitor added at " + basePos.toShortString() + ".");
+        return pastureRegistered(basePos, false);
+    }
+
+    /** Gives one-time client-side synchronization guidance when adding a target. */
+    private static int pastureRegistered(BlockPos basePos, boolean updated) {
+        feedback("Pasture monitor " + (updated ? "updated" : "added") + " at " + basePos.toShortString() + ".");
+        feedback("Tip: open this pasture once to cache parents for detailed egg alerts.");
+        feedback("Only future HAS_EGG false -> true changes trigger a new egg alert.");
+        return 1;
     }
 
     private static int removeCoordinates(ConfigManager configManager, int x, int y, int z) {

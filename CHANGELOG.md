@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.1
+
+- Explain the one-time pasture GUI synchronization step when registering a monitoring target.
+- Add a Discord/ntfy metadata hint when an egg alert has no locally available parent data.
+
 ## 1.5.0
 
 - Cache parent species from Cobblemon's OpenPasturePacket after opening a monitored pasture GUI.
