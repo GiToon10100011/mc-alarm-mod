@@ -56,6 +56,10 @@ Discord Webhook URL 또는 ntfy topic을 입력하고 해당 기능을 활성화
 /cobble-monitor pasture remove <x> <y> <z>
 /cobble-monitor pasture list
 /cobble-monitor pasture clear
+/cobble-monitor config discord <url>
+/cobble-monitor config discord clear
+/cobble-monitor config ntfy <topic>
+/cobble-monitor config ntfy clear
 /cobble-monitor reload
 ```
 

@@ -74,6 +74,17 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 5. `enableDiscord`를 `true`로 설정한다.
 6. `/cobble-monitor reload`를 실행한다.
 
+명령어로도 설정할 수 있다.
+
+```text
+/cobble-monitor config discord <url>
+/cobble-monitor config discord clear
+/cobble-monitor config ntfy <topic>
+/cobble-monitor config ntfy clear
+```
+
+URL은 채팅 기록이나 스트리밍 화면에 노출될 수 있으므로, 개인 클라이언트에서만 사용한다.
+
 Discord 알림은 일반 텍스트가 아니라 Embed 카드로 전송된다.
 
 - 밤: 남색 카드

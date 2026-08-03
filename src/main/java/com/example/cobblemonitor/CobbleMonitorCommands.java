@@ -1,6 +1,7 @@
 package com.example.cobblemonitor;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.client.MinecraftClient;
@@ -24,6 +25,24 @@ public final class CobbleMonitorCommands {
                                         .executes(context -> helpNotifications()))
                                 .then(ClientCommandManager.literal("config")
                                         .executes(context -> helpConfig())))
+                        .then(ClientCommandManager.literal("config")
+                                .executes(context -> helpConfig())
+                                        .then(ClientCommandManager.literal("discord")
+                                                .then(ClientCommandManager.literal("clear")
+                                                        .executes(context -> clearDiscordWebhook(configManager)))
+                                                .then(ClientCommandManager.argument("url", StringArgumentType.greedyString())
+                                                        .executes(context -> setDiscordWebhook(
+                                                                configManager,
+                                                                StringArgumentType.getString(context, "url")
+                                                        ))))
+                                        .then(ClientCommandManager.literal("ntfy")
+                                                .then(ClientCommandManager.literal("clear")
+                                                        .executes(context -> clearNtfyTopic(configManager)))
+                                                .then(ClientCommandManager.argument("topic", StringArgumentType.word())
+                                                        .executes(context -> setNtfyTopic(
+                                                                configManager,
+                                                                StringArgumentType.getString(context, "topic")
+                                                        )))))
                         .then(ClientCommandManager.literal("reload")
                                 .executes(context -> {
                                     reloadAction.run();
@@ -69,6 +88,8 @@ public final class CobbleMonitorCommands {
         feedback("/cobble-monitor pasture remove <x> <y> <z>");
         feedback("/cobble-monitor pasture list");
         feedback("/cobble-monitor pasture clear");
+        feedback("/cobble-monitor config discord <url>");
+        feedback("/cobble-monitor config ntfy <topic>");
         feedback("/cobble-monitor reload");
         return 1;
     }
@@ -100,8 +121,48 @@ public final class CobbleMonitorCommands {
         feedback("Configuration:");
         feedback("File: config/cobble-monitor.json");
         feedback("Edit the file, then run /cobble-monitor reload.");
+        feedback("Set Discord: /cobble-monitor config discord <url>");
+        feedback("Clear Discord: /cobble-monitor config discord clear");
+        feedback("Set ntfy: /cobble-monitor config ntfy <topic>");
+        feedback("Clear ntfy: /cobble-monitor config ntfy clear");
         feedback("Webhook values are kept local and are never logged.");
         return 1;
+    }
+
+    private static int setDiscordWebhook(ConfigManager configManager, String webhook) {
+        String value = webhook == null ? "" : webhook.trim();
+        if (value.isBlank()) {
+            return failure("Discord Webhook URL cannot be empty.");
+        }
+        configManager.getConfig().discordWebhook = value;
+        configManager.getConfig().enableDiscord = true;
+        configManager.save();
+        return success("Discord Webhook saved and enabled.");
+    }
+
+    private static int clearDiscordWebhook(ConfigManager configManager) {
+        configManager.getConfig().discordWebhook = "";
+        configManager.getConfig().enableDiscord = false;
+        configManager.save();
+        return success("Discord Webhook cleared and disabled.");
+    }
+
+    private static int setNtfyTopic(ConfigManager configManager, String topic) {
+        String value = topic == null ? "" : topic.trim();
+        if (value.isBlank()) {
+            return failure("ntfy topic cannot be empty.");
+        }
+        configManager.getConfig().ntfyTopic = value;
+        configManager.getConfig().enableNtfy = true;
+        configManager.save();
+        return success("ntfy topic saved and enabled.");
+    }
+
+    private static int clearNtfyTopic(ConfigManager configManager) {
+        configManager.getConfig().ntfyTopic = "";
+        configManager.getConfig().enableNtfy = false;
+        configManager.save();
+        return success("ntfy topic cleared and disabled.");
     }
 
     private static int addLooking(ConfigManager configManager) {
