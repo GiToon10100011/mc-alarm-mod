@@ -75,6 +75,69 @@ Discord Webhook URL 또는 ntfy topic을 입력하고 해당 기능을 활성화
 /cobble-monitor help config
 ```
 
+## English
+
+Cobble Monitor is a client-side Fabric mod for Minecraft 1.21.1. It monitors
+Minecraft night time, selected Cobblemon pastures, and Cobblemon Poke Snack
+consumption, then sends notifications to Discord Webhooks and/or ntfy.
+
+### Installation
+
+1. Install Fabric Loader, Fabric API, and Java 21.
+2. Install `Cobblemon-fabric-1.7.3+1.21.1.jar` for Cobblemon features.
+3. Install `Cobbreeding-fabric-2.2.2.jar` for pasture egg monitoring.
+4. Put `cobble-monitor-1.0.0.jar` in the instance `mods` folder.
+5. Do not put the `sources.jar` file in the `mods` folder.
+
+The mod is client-side only. It does not need to be installed on the server.
+
+### Configuration
+
+The configuration file is created automatically at:
+
+```text
+.minecraft/config/cobble-monitor.json
+```
+
+You can configure Discord and ntfy directly in the file, or use these client
+commands without restarting the game:
+
+```text
+/cobble-monitor config discord <webhook-url>
+/cobble-monitor config discord clear
+/cobble-monitor config ntfy <topic>
+/cobble-monitor config ntfy clear
+```
+
+If you edit the file manually, apply the changes with:
+
+```text
+/cobble-monitor reload
+```
+
+Webhook URLs are saved locally and should never be committed to GitHub or
+shared in screenshots and streams.
+
+### Pasture monitoring
+
+Look at a Cobblemon pasture and run:
+
+```text
+/cobble-monitor pasture inspect
+/cobble-monitor pasture add looking
+```
+
+`inspect` displays the dimension, coordinates, and monitoring status.
+Use `/cobble-monitor pasture list` to view all registered pastures.
+
+### Snack monitoring
+
+Poke Snack monitoring is automatic. No snack coordinates or registration are
+required. To enable or disable it, change `events.snackConsumed` in the config
+file and run `/cobble-monitor reload`.
+
+Use `/cobble-monitor help` in-game for the complete command list.
+
 ## Snack monitoring commands
 
 Snack monitoring is automatic. No snack coordinate or snack registration is required.
