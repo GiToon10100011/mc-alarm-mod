@@ -92,7 +92,7 @@ consumption, then sends notifications to Discord Webhooks and/or ntfy.
 1. Install Fabric Loader, Fabric API, and Java 21.
 2. Install `Cobblemon-fabric-1.7.3+1.21.1.jar` for Cobblemon features.
 3. Install `Cobbreeding-fabric-2.2.2.jar` for pasture egg monitoring.
-4. Put `cobble-monitor-1.1.1.jar` in the instance `mods` folder.
+4. Put `cobble-monitor-1.1.2.jar` in the instance `mods` folder.
 5. Do not put the `sources.jar` file in the `mods` folder.
 
 The mod is client-side only. It does not need to be installed on the server.

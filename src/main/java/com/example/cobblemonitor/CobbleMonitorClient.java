@@ -88,7 +88,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         }
 
         long timeOfDay = world.getTimeOfDay() % 24000L;
-        if (timeOfDay < config.resetTime) {
+        if (timeOfDay <= config.resetTime) {
             nightNotified = false;
             if (!dayNotified && config.events != null) {
                 dayNotified = true;

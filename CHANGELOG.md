@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Fixed the `resetTime` boundary so `/time set day` resets the next night notification correctly.
+
 ## 1.1.1
 
 - Added in-game debug status diagnostics.

@@ -19,7 +19,7 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 ## 2. 설치
 
 1. Fabric Loader 0.16.5 이상과 Fabric API를 설치한다.
-2. `cobble-monitor-1.1.1.jar`를 클라이언트의 `mods` 폴더에 넣는다.
+2. `cobble-monitor-1.1.2.jar`를 클라이언트의 `mods` 폴더에 넣는다.
 3. 기존 `nightnotifier` JAR이 있으면 중복 실행을 막기 위해 제거한다.
 4. Cobblemon 기능을 사용할 경우 Cobblemon 1.7.3을 설치한다.
 5. 목장 알을 감시할 경우 Cobbreeding 2.2.2도 설치한다.
@@ -212,7 +212,7 @@ ntfy는 모바일 알림 목록에 맞춰 제목과 간단한 메타데이터를
 ### 밤 시작
 
 월드 시간이 `nightTime` 이상이 되면 해당 밤에 한 번만 알림을 보낸다.
-다음 날 `resetTime` 이전에 상태를 초기화한다.
+다음 날 `resetTime` 이하에서 상태를 초기화한다. 기본값 `1000`에서는 `/time set day`도 정상적으로 다음 밤 알림을 준비한다.
 
 ### 목장 알
 
