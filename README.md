@@ -75,6 +75,23 @@ Discord Webhook URL 또는 ntfy topic을 입력하고 해당 기능을 활성화
 /cobble-monitor help config
 ```
 
+## Snack monitoring commands
+
+Snack monitoring is automatic. No snack coordinate or snack registration is required.
+
+```text
+/cobble-monitor help notifications
+```
+
+To disable snack notifications, set `events.snackConsumed` to `false` in
+`config/cobble-monitor.json`, then run:
+
+```text
+/cobble-monitor reload
+```
+
+Set it back to `true` and run the same reload command to enable snack notifications again.
+
 ## 빌드
 
 ```text
