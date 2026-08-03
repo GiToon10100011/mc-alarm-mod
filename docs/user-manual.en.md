@@ -88,10 +88,13 @@ For a new egg, the alert follows this order:
    add its Discord pixel-sprite thumbnail.
 4. If several species are possible, list candidates and do not choose a sprite.
 
-`/cobble-monitor debug pasture` shows the parent species, possible results,
-tethered-entry count, and resolved Pokemon count. Pasture notification embeds
-omit Egg Count because the client cannot reliably receive the egg inventory;
-exact counts are reserved for the future server companion.
+`/cobble-monitor debug pasture` inspects all saved pasture registrations rather
+than the crosshair. It shows configured coordinates, chunk availability,
+resolved base, `HAS_EGG`, BlockEntity, local egg stacks, parent species,
+possible results, tethered-entry count, and resolved Pokemon count. Use
+`/cobble-monitor debug pasture looking` only for crosshair diagnostics. Pasture
+notification embeds omit Egg Count because the client cannot reliably receive
+the egg inventory; exact counts are reserved for the future server companion.
 
 ## Poke Snack monitoring
 
@@ -111,6 +114,7 @@ any external account or server history service.
 /cobble-monitor help
 /cobble-monitor debug status
 /cobble-monitor debug pasture
+/cobble-monitor debug pasture looking
 /cobble-monitor debug snack
 /cobble-monitor debug notify night
 /cobble-monitor debug notify day

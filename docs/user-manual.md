@@ -77,6 +77,7 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 /cobble-monitor debug notify night
 /cobble-monitor debug notify day
 /cobble-monitor debug pasture
+/cobble-monitor debug pasture looking
 /cobble-monitor debug snack
 /cobble-monitor debug notify pasture
 /cobble-monitor debug notify snack
@@ -86,9 +87,9 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 `latest.log`에서 `Night detected`, `Day detected`, `Discord notification sent`,
 `ntfy notification sent`, `Failed to send notification` 로그를 확인한다.
 
-`debug pasture`는 바라보고 있는 목장의 위/아래 파트, 실제 감시 기준이 되는 아래쪽
-좌표, `has_egg`, BlockEntity, 동기화된 알 메타데이터를 출력한다. `debug snack`은
-Cobblemon 스낵 패킷 수신 횟수·중복 제거·대기열을 보여준다. `debug notify snack`은
+`debug pasture`는 저장된 모든 감시 대상 목장의 좌표, 클라이언트 청크 로드 여부,
+`has_egg`, BlockEntity, 부모 데이터 진단을 출력한다. 조준 중인 블록만 확인하려면
+`debug pasture looking`을 사용한다. `debug snack`은 Cobblemon 스낵 패킷 수신 횟수·중복 제거·대기열을 보여준다. `debug notify snack`은
 Webhook 전송만 시험하며 실제 스낵 패킷 수신 여부는 `debug snack`으로 확인한다.
 목장 외형의 빈 공간이 조준 좌표로 잡히는 경우에는 같은 X/Z에서 위·아래 2블록까지
 목장 블록을 찾아 아래쪽 기준 좌표로 보정한다.

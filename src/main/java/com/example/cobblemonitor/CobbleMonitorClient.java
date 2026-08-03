@@ -254,6 +254,18 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         return activeInstance.pastureEggNotifier.debugAt(client.world, hit.getBlockPos());
     }
 
+    /** Returns diagnostics for every configured pasture in the current client world. */
+    public static List<String> debugRegisteredPastures() {
+        if (activeInstance == null || activeInstance.pastureEggNotifier == null) {
+            return List.of("Pasture debug unavailable: Cobblemon and Cobbreeding must be loaded.");
+        }
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null) {
+            return List.of("Pasture debug unavailable: connect to a world first.");
+        }
+        return activeInstance.pastureEggNotifier.debugRegisteredPastures(client.world);
+    }
+
     /** Returns diagnostics for Cobblemon snack-packet observation. */
     public static List<String> debugSnackStatus() {
         if (activeInstance == null || snackMonitorProvider == null) {

@@ -329,6 +329,65 @@ public final class PastureEggNotifier {
         return lines;
     }
 
+    /**
+     * Inspects the persisted pasture registrations instead of relying on the
+     * crosshair. This is the authoritative client-side view of monitoring
+     * targets and makes unloaded chunks explicit.
+     */
+    public List<String> debugRegisteredPastures(ClientWorld world) {
+        List<String> lines = new ArrayList<>();
+        List<ConfigManager.MonitoredPasture> targets = configManager.getConfig().monitoredPastures;
+        lines.add("Registered pasture debug: " + targets.size() + " target(s)");
+        if (targets.isEmpty()) {
+            return lines;
+        }
+
+        String currentDimension = world.getRegistryKey().getValue().toString();
+        for (ConfigManager.MonitoredPasture target : targets) {
+            BlockPos configuredPos = new BlockPos(target.x, target.y, target.z);
+            lines.add("Target: " + target.dimension + " " + configuredPos.toShortString());
+            lines.add("Registered By: " + (target.registeredByName == null || target.registeredByName.isBlank()
+                    ? "unavailable"
+                    : target.registeredByName));
+            if (!currentDimension.equals(target.dimension)) {
+                lines.add("Status: different dimension (current=" + currentDimension + ")");
+                continue;
+            }
+            if (!world.isChunkLoaded(configuredPos)) {
+                lines.add("Status: client chunk is not loaded");
+                continue;
+            }
+
+            BlockState configuredState = world.getBlockState(configuredPos);
+            BlockPos base = resolvePastureBase(world, configuredPos);
+            if (base == null) {
+                lines.add("Configured block: " + Registries.BLOCK.getId(configuredState.getBlock()));
+                lines.add("Status: configured position is not a Cobblemon pasture");
+                continue;
+            }
+
+            Boolean hasEgg = readHasEgg(world, base);
+            EggMetadata metadata = readEggMetadata(world, base, Boolean.TRUE.equals(hasEgg));
+            String key = target.dimension + ":" + base.toShortString();
+            lines.add("Resolved base: " + base.toShortString());
+            lines.add("HAS_EGG=" + hasEgg + ", observed=" + observedStates.get(key));
+            BlockEntity blockEntity = world.getBlockEntity(base);
+            lines.add("BlockEntity: " + (blockEntity == null ? "none" : blockEntity.getClass().getSimpleName()));
+            lines.add("Egg inventory usable=" + metadata.inventorySynced
+                    + ", local egg stacks=" + metadata.eggCount);
+            lines.add("Tethered entries=" + metadata.parents.tetheredEntryCount
+                    + ", resolved Pokemon=" + metadata.parents.resolvedPokemonCount
+                    + ", parent data usable=" + metadata.parents.usable);
+            lines.add("Parents=" + (metadata.parents.species.isEmpty()
+                    ? "unavailable"
+                    : String.join(", ", metadata.parents.species)));
+            lines.add("Possible egg species=" + (metadata.parents.possibleEggSpecies.isEmpty()
+                    ? "unavailable"
+                    : String.join(", ", metadata.parents.possibleEggSpecies)));
+        }
+        return lines;
+    }
+
     private static boolean isPastureBlock(BlockState state) {
         return PASTURE_BLOCK_ID.equals(Registries.BLOCK.getId(state.getBlock()).toString())
                 && state.getBlock() != Blocks.AIR;

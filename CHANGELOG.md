@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.3
+
+- Changed `debug pasture` to inspect persisted monitoring targets instead of the crosshair.
+- Added `debug pasture looking` for explicit crosshair diagnostics.
+
 ## 1.4.2
 
 - Removed the unreliable Egg Count field from pasture notification embeds; exact counts remain a server-side roadmap feature.

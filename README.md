@@ -152,13 +152,17 @@ seen players can still be named while offline.
 ```text
 /cobble-monitor debug status
 /cobble-monitor debug pasture
+/cobble-monitor debug pasture looking
 /cobble-monitor debug snack
 /cobble-monitor debug notify <night|day|pasture|snack>
 ```
 
-`debug pasture` reports the resolved pasture position, `has_egg`, synced egg
-metadata, parent species, and possible egg species. `debug notify` tests only
-the configured Discord/ntfy delivery; it does not simulate a Cobblemon packet.
+`debug pasture` inspects every persisted monitoring target directly: configured
+coordinates, current dimension, client chunk availability, resolved base,
+`HAS_EGG`, BlockEntity, local egg stacks, and parent-data diagnostics.
+`debug pasture looking` is the separate crosshair-only diagnostic. `debug
+notify` tests only the configured Discord/ntfy delivery; it does not simulate a
+Cobblemon packet.
 Pasture notification embeds intentionally omit Egg Count because Cobbreeding
 does not reliably synchronize that inventory to a pure client mod. Exact counts
 remain a future server-companion feature.

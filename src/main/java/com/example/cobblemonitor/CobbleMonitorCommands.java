@@ -68,7 +68,9 @@ public final class CobbleMonitorCommands {
                                         .then(ClientCommandManager.literal("snack")
                                                 .executes(context -> debugNotification("snack"))))
                                 .then(ClientCommandManager.literal("pasture")
-                                        .executes(context -> debugPasture()))
+                                        .executes(context -> debugRegisteredPastures())
+                                        .then(ClientCommandManager.literal("looking")
+                                                .executes(context -> debugLookedPasture())))
                                 .then(ClientCommandManager.literal("snack")
                                         .executes(context -> debugSnack())))
                         .then(ClientCommandManager.literal("reload")
@@ -124,7 +126,7 @@ public final class CobbleMonitorCommands {
         feedback("/cobble-monitor config event night <on|off>");
         feedback("/cobble-monitor config event day <on|off>");
         feedback("/cobble-monitor debug status");
-        feedback("/cobble-monitor debug pasture");
+        feedback("/cobble-monitor debug pasture [looking]");
         feedback("/cobble-monitor debug snack");
         feedback("/cobble-monitor debug notify <night|day|pasture|snack>");
         feedback("/cobble-monitor reload");
@@ -233,7 +235,14 @@ public final class CobbleMonitorCommands {
         return success("Debug " + event + " notification requested. Check Discord/ntfy and latest.log.");
     }
 
-    private static int debugPasture() {
+    private static int debugRegisteredPastures() {
+        for (String line : CobbleMonitorClient.debugRegisteredPastures()) {
+            feedback(line);
+        }
+        return 1;
+    }
+
+    private static int debugLookedPasture() {
         for (String line : CobbleMonitorClient.debugLookedPasture()) {
             feedback(line);
         }
