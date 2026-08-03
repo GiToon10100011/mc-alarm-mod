@@ -66,6 +66,19 @@ Register a pasture by looking at either half of it:
 Only registered pastures are checked. Cobble Monitor normalizes a two-block
 pasture to its bottom BlockEntity position.
 
+### Important: render-distance limitation
+
+This is a client-side monitor. A pasture can be inspected only when its chunk
+and BlockEntity are currently sent to the monitoring client. Being near the
+pasture on another player's client does not send its live state to you.
+
+If you leave the pasture beyond your client render/tracking distance, no
+real-time egg detection is possible. Returning in the same client world can
+still trigger an alert when the last known state was `HAS_EGG=false` and the
+loaded state is now `true`. Disconnecting or changing client worlds resets that
+baseline to prevent duplicate alerts. See the roadmap for the planned optional
+server-side companion that will address remote monitoring.
+
 For a new egg, the alert follows this order:
 
 1. Read the exact species from synced egg data.

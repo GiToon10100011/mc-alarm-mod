@@ -122,6 +122,20 @@ possible-egg calculation. A single result is shown as an inferred species with a
 Discord sprite thumbnail. Multiple valid results are listed as candidates rather
 than guessing a potentially wrong Pokemon.
 
+### Important client-side limitation
+
+Pasture monitoring is limited to chunks currently sent to the monitoring
+client. If the pasture is outside **your** client render/tracking distance, this
+mod cannot see its `HAS_EGG`, inventory, or parent data and cannot notify in
+real time. Another player standing near the pasture may keep it active on the
+server, but their chunk updates are not sent to your distant client.
+
+Returning to a loaded pasture can detect a remembered `false → true` egg state
+in the same client world, but this is not a replacement for continuous remote
+monitoring. Disconnecting or changing client worlds resets the baseline to
+avoid duplicate alerts. Distance-independent alerts require the optional future
+server companion described in the roadmap.
+
 ## Poke Snack monitoring
 
 Snack monitoring is automatic and does not require snack coordinates or manual

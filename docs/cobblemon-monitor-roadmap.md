@@ -65,6 +65,30 @@ is only a baseline to avoid false duplicate notifications.
 
 ## Planned: optional server-side remote pasture monitoring
 
+### Project boundary: a new standalone server mod
+
+The server companion must **not** be added by changing the existing client mod
+project. When this work begins, create a new sibling project folder named
+`cobble-monitor-server` and treat it as a separate Fabric mod with its own:
+
+```text
+cobble-monitor-server/
+  build.gradle
+  gradle.properties
+  settings.gradle
+  src/main/java/
+  src/main/resources/
+  README.md
+  CHANGELOG.md
+```
+
+It will have its own mod ID, versioning, build artifact, configuration, release
+notes, and compatibility tests. The current `mc-alarm-mod` client project stays
+unchanged unless a separately planned protocol-compatibility release is needed.
+Do not turn the current project into a combined client/server module as a
+shortcut. A future shared protocol library, if truly needed, must also be a
+separate versioned module with explicit compatibility rules.
+
 ### Goal
 
 Allow a registered pasture to be observed independently of a monitoring
