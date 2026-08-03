@@ -17,6 +17,7 @@ import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,6 +31,11 @@ public final class SnackMonitorProvider {
     private final Deque<PendingSnack> pendingSnacks = new ArrayDeque<>();
     private final Map<String, Long> recentPackets = new HashMap<>();
     private NotificationService notificationService;
+    private boolean initialized;
+    private long receivedPacketCount;
+    private long deduplicatedPacketCount;
+    private String lastPacket = "none";
+    private String lastResolution = "none";
 
     public SnackMonitorProvider(ConfigManager configManager, NotificationService notificationService) {
         this.configManager = configManager;
@@ -38,6 +44,7 @@ public final class SnackMonitorProvider {
 
     /** The actual packet interception is supplied by the optional Cobblemon mixin. */
     public void initialize() {
+        initialized = true;
         LOGGER.info("Snack provider is listening for Cobblemon's Poke Snack packet");
     }
 
@@ -49,7 +56,10 @@ public final class SnackMonitorProvider {
         if (!(packet instanceof com.cobblemon.mod.common.net.messages.client.effect.PokeSnackBlockParticlesPacket snackPacket)) {
             return;
         }
+        receivedPacketCount++;
+        lastPacket = snackPacket.getBlockPos().toShortString() + " -> " + snackPacket.getEntityPos().toShortString();
         if (!configManager.getConfig().events.snackConsumed) {
+            lastResolution = "ignored: snack event disabled";
             return;
         }
 
@@ -64,10 +74,13 @@ public final class SnackMonitorProvider {
         long tick = client.world.getTime();
         Long previousTick = recentPackets.put(key, tick);
         if (previousTick != null && tick - previousTick < 5) {
+            deduplicatedPacketCount++;
+            lastResolution = "ignored: duplicate packet";
             return;
         }
 
         LOGGER.info("Snack detected using Packet");
+        lastResolution = "pending Pokemon resolution";
         pendingSnacks.addLast(new PendingSnack(
                 client.world,
                 snackPacket.getBlockPos(),
@@ -132,6 +145,21 @@ public final class SnackMonitorProvider {
         fields.put("Snack Position", pending.world.getRegistryKey().getValue() + " " + pending.blockPos.toShortString());
         fields.put("Source", "Cobblemon S2C packet");
         notificationService.notify(NotificationService.EventType.SNACK_CONSUMED, fields);
+        lastResolution = pokemonEntity == null
+                ? "notification sent with unresolved Pokemon"
+                : "notification sent for " + pokemonEntity.getPokemon().getSpecies().getName();
+    }
+
+    /** Returns packet-observation diagnostics without scanning entities or exposing credentials. */
+    public List<String> debugStatusLines() {
+        return List.of(
+                "Snack debug:",
+                "Provider initialized=" + initialized + ", event enabled=" + configManager.getConfig().events.snackConsumed,
+                "Packets received=" + receivedPacketCount + ", deduplicated=" + deduplicatedPacketCount
+                        + ", pending=" + pendingSnacks.size(),
+                "Last packet: " + lastPacket,
+                "Last resolution: " + lastResolution
+        );
     }
 
     private void addSnackMetadata(MinecraftClient client, Map<String, Object> fields, PokeSnackBlockEntity snack) {

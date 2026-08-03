@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+- Normalized both halves of Cobblemon pastures to the bottom BlockEntity position.
+- Added pasture and snack runtime diagnostics plus manual delivery tests.
+- Preserved pasture egg alerts when the client has not synchronized egg species metadata.
+
 ## 1.1.2
 
 - Fixed the `resetTime` boundary so `/time set day` resets the next night notification correctly.

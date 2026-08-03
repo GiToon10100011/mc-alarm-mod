@@ -4,6 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
     private ClientWorld lastWorld;
     private boolean nightNotified;
     private boolean dayNotified;
+    private long lastOverworldTimeOfDay = -1L;
 
     @Override
     public void onInitializeClient() {
@@ -62,6 +64,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
             lastWorld = null;
             nightNotified = false;
             dayNotified = false;
+            lastOverworldTimeOfDay = -1L;
             if (snackMonitorProvider != null) {
                 snackMonitorProvider.tick(client);
             }
@@ -72,12 +75,14 @@ public final class CobbleMonitorClient implements ClientModInitializer {
             lastWorld = world;
             nightNotified = false;
             dayNotified = false;
+            lastOverworldTimeOfDay = -1L;
             if (pastureEggNotifier != null) {
                 pastureEggNotifier.resetWorldState();
             }
         }
 
         if (!World.OVERWORLD.equals(world.getRegistryKey())) {
+            lastOverworldTimeOfDay = -1L;
             if (pastureEggNotifier != null) {
                 pastureEggNotifier.tick(client);
             }
@@ -88,11 +93,15 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         }
 
         long timeOfDay = world.getTimeOfDay() % 24000L;
-        if (timeOfDay <= config.resetTime) {
+        boolean movedFromNightToDay = lastOverworldTimeOfDay >= config.nightTime
+                && timeOfDay < config.nightTime
+                && timeOfDay < lastOverworldTimeOfDay;
+        boolean dayTransition = timeOfDay <= config.resetTime || movedFromNightToDay;
+        if (dayTransition) {
             nightNotified = false;
             if (!dayNotified && config.events != null) {
                 dayNotified = true;
-                LOGGER.info("Day detected");
+                LOGGER.info("Day detected{}", movedFromNightToDay ? " after time rollback" : "");
                 if (config.events.day) {
                     notificationService.notify(NotificationService.EventType.DAY, Map.of(
                             "Time", timeOfDay,
@@ -121,6 +130,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         if (snackMonitorProvider != null) {
             snackMonitorProvider.tick(client);
         }
+        lastOverworldTimeOfDay = timeOfDay;
     }
 
     private void reloadRuntimeConfiguration() {
@@ -172,7 +182,8 @@ public final class CobbleMonitorClient implements ClientModInitializer {
                 "Time: " + time + " / nightTime=" + config.nightTime + ", resetTime=" + config.resetTime,
                 "Events: night=" + config.events.night + ", day=" + config.events.day,
                 "State: nightNotified=" + activeInstance.nightNotified
-                        + ", dayNotified=" + activeInstance.dayNotified,
+                        + ", dayNotified=" + activeInstance.dayNotified
+                        + ", lastOverworldTime=" + activeInstance.lastOverworldTimeOfDay,
                 "Discord: enabled=" + config.enableDiscord
                         + ", configured=" + !config.discordWebhook.isBlank(),
                 "ntfy: enabled=" + config.enableNtfy
@@ -189,6 +200,8 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         NotificationService.EventType eventType = switch (eventName) {
             case "night" -> NotificationService.EventType.NIGHT;
             case "day" -> NotificationService.EventType.DAY;
+            case "pasture" -> NotificationService.EventType.PASTURE_EGG;
+            case "snack" -> NotificationService.EventType.SNACK_CONSUMED;
             default -> null;
         };
         if (eventType == null) {
@@ -200,5 +213,25 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         ));
         LOGGER.info("Debug notification requested: {}", eventName);
         return true;
+    }
+
+    /** Returns diagnostics for the pasture block currently under the player's crosshair. */
+    public static List<String> debugLookedPasture() {
+        if (activeInstance == null || activeInstance.pastureEggNotifier == null) {
+            return List.of("Pasture debug unavailable: Cobblemon and Cobbreeding must be loaded.");
+        }
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null || !(client.crosshairTarget instanceof BlockHitResult hit)) {
+            return List.of("Pasture debug: look at a pasture block while connected to a world.");
+        }
+        return activeInstance.pastureEggNotifier.debugAt(client.world, hit.getBlockPos());
+    }
+
+    /** Returns diagnostics for Cobblemon snack-packet observation. */
+    public static List<String> debugSnackStatus() {
+        if (activeInstance == null || snackMonitorProvider == null) {
+            return List.of("Snack debug unavailable: Cobblemon must be loaded.");
+        }
+        return snackMonitorProvider.debugStatusLines();
     }
 }

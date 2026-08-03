@@ -62,7 +62,15 @@ public final class CobbleMonitorCommands {
                                         .then(ClientCommandManager.literal("night")
                                                 .executes(context -> debugNotification("night")))
                                         .then(ClientCommandManager.literal("day")
-                                                .executes(context -> debugNotification("day")))))
+                                                .executes(context -> debugNotification("day")))
+                                        .then(ClientCommandManager.literal("pasture")
+                                                .executes(context -> debugNotification("pasture")))
+                                        .then(ClientCommandManager.literal("snack")
+                                                .executes(context -> debugNotification("snack"))))
+                                .then(ClientCommandManager.literal("pasture")
+                                        .executes(context -> debugPasture()))
+                                .then(ClientCommandManager.literal("snack")
+                                        .executes(context -> debugSnack())))
                         .then(ClientCommandManager.literal("reload")
                                 .executes(context -> {
                                     reloadAction.run();
@@ -116,7 +124,9 @@ public final class CobbleMonitorCommands {
         feedback("/cobble-monitor config event night <on|off>");
         feedback("/cobble-monitor config event day <on|off>");
         feedback("/cobble-monitor debug status");
-        feedback("/cobble-monitor debug notify <night|day>");
+        feedback("/cobble-monitor debug pasture");
+        feedback("/cobble-monitor debug snack");
+        feedback("/cobble-monitor debug notify <night|day|pasture|snack>");
         feedback("/cobble-monitor reload");
         return 1;
     }
@@ -223,6 +233,20 @@ public final class CobbleMonitorCommands {
         return success("Debug " + event + " notification requested. Check Discord/ntfy and latest.log.");
     }
 
+    private static int debugPasture() {
+        for (String line : CobbleMonitorClient.debugLookedPasture()) {
+            feedback(line);
+        }
+        return 1;
+    }
+
+    private static int debugSnack() {
+        for (String line : CobbleMonitorClient.debugSnackStatus()) {
+            feedback(line);
+        }
+        return 1;
+    }
+
     private static int addLooking(ConfigManager configManager) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null || client.player == null || !(client.crosshairTarget instanceof net.minecraft.util.hit.BlockHitResult hit)) {
@@ -240,7 +264,8 @@ public final class CobbleMonitorCommands {
         if (client.world == null || client.player == null) {
             return failure("A world must be loaded to register a pasture.");
         }
-        if (!PastureEggNotifier.isPastureBlock(client.world, pos)) {
+        BlockPos basePos = PastureEggNotifier.resolvePastureBase(client.world, pos);
+        if (basePos == null) {
             return failure("The selected block is not a Cobblemon pasture.");
         }
 
@@ -250,19 +275,25 @@ public final class CobbleMonitorCommands {
         ConfigManager.Config config = configManager.getConfig();
 
         for (ConfigManager.MonitoredPasture pasture : config.monitoredPastures) {
-            if (pasture.sameLocation(dimension, pos.getX(), pos.getY(), pos.getZ())) {
+            BlockPos existingPos = new BlockPos(pasture.x, pasture.y, pasture.z);
+            BlockPos existingBase = PastureEggNotifier.resolvePastureBase(client.world, existingPos);
+            if (pasture.sameLocation(dimension, basePos.getX(), basePos.getY(), basePos.getZ())
+                    || (dimension.equals(pasture.dimension) && basePos.equals(existingBase))) {
+                pasture.x = basePos.getX();
+                pasture.y = basePos.getY();
+                pasture.z = basePos.getZ();
                 pasture.registeredByUuid = uuid;
                 pasture.registeredByName = name;
                 configManager.save();
-                return success("Pasture monitor updated at " + pos.toShortString() + ".");
+                return success("Pasture monitor updated at " + basePos.toShortString() + ".");
             }
         }
 
         config.monitoredPastures.add(new ConfigManager.MonitoredPasture(
-                dimension, pos.getX(), pos.getY(), pos.getZ(), uuid, name
+                dimension, basePos.getX(), basePos.getY(), basePos.getZ(), uuid, name
         ));
         configManager.save();
-        return success("Pasture monitor added at " + pos.toShortString() + ".");
+        return success("Pasture monitor added at " + basePos.toShortString() + ".");
     }
 
     private static int removeCoordinates(ConfigManager configManager, int x, int y, int z) {
@@ -302,14 +333,15 @@ public final class CobbleMonitorCommands {
         }
 
         BlockPos pos = hit.getBlockPos();
-        if (!PastureEggNotifier.isPastureBlock(client.world, pos)) {
+        BlockPos basePos = PastureEggNotifier.resolvePastureBase(client.world, pos);
+        if (basePos == null) {
             return failure("The block you are looking at is not a Cobblemon pasture.");
         }
 
         String dimension = client.world.getRegistryKey().getValue().toString();
-        feedback("Pasture position: " + dimension + " " + pos.toShortString());
+        feedback("Pasture base position: " + dimension + " " + basePos.toShortString());
         for (ConfigManager.MonitoredPasture pasture : configManager.getConfig().monitoredPastures) {
-            if (pasture.sameLocation(dimension, pos.getX(), pos.getY(), pos.getZ())) {
+            if (pasture.sameLocation(dimension, basePos.getX(), basePos.getY(), basePos.getZ())) {
                 feedback("Monitoring: enabled (registered by " + pasture.registeredByName + ")");
                 return 1;
             }
