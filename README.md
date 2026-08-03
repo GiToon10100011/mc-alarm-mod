@@ -159,8 +159,9 @@ seen players can still be named while offline.
 `debug pasture` reports the resolved pasture position, `has_egg`, synced egg
 metadata, parent species, and possible egg species. `debug notify` tests only
 the configured Discord/ntfy delivery; it does not simulate a Cobblemon packet.
-When `HAS_EGG` is true but the client has no egg ItemStacks, `Egg Count` is
-shown as unavailable rather than the misleading value `0`.
+Pasture notification embeds intentionally omit Egg Count because Cobbreeding
+does not reliably synchronize that inventory to a pure client mod. Exact counts
+remain a future server-companion feature.
 
 ## Search terms
 

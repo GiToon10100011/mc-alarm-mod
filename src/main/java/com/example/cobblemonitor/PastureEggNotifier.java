@@ -106,7 +106,6 @@ public final class PastureEggNotifier {
         if (!metadata.parents.species.isEmpty()) {
             fields.put("Parents", String.join(" + ", metadata.parents.species));
         }
-        fields.put("Egg Count", metadata.inventorySynced ? metadata.eggCount : "Unavailable");
         fields.put("Pasture", world.getRegistryKey().getValue() + " " + pos.toShortString());
         if (target.registeredByName != null && !target.registeredByName.isBlank()) {
             fields.put("Registered By", target.registeredByName);

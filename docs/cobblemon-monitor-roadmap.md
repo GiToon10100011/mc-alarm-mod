@@ -113,7 +113,7 @@ PastureEggCreatedPayload
   pasturePosition
   stablePastureKey
   createdAt
-  eggCount                 # when server-authoritative data exposes it
+  eggCount                 # exact server-authoritative count
   exactSpecies
   form
   parentA

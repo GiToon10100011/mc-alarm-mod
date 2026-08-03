@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.2
+
+- Removed the unreliable Egg Count field from pasture notification embeds; exact counts remain a server-side roadmap feature.
+
 ## 1.4.1
 
 - Show an unavailable pasture egg count when the client receives `HAS_EGG` but not the egg inventory contents.

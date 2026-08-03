@@ -89,9 +89,9 @@ For a new egg, the alert follows this order:
 4. If several species are possible, list candidates and do not choose a sprite.
 
 `/cobble-monitor debug pasture` shows the parent species, possible results,
-tethered-entry count, and resolved Pokemon count. If `HAS_EGG` is true but the
-client has not received egg ItemStacks, the alert intentionally shows Egg Count
-as unavailable rather than incorrectly reporting `0`.
+tethered-entry count, and resolved Pokemon count. Pasture notification embeds
+omit Egg Count because the client cannot reliably receive the egg inventory;
+exact counts are reserved for the future server companion.
 
 ## Poke Snack monitoring
 
