@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0
+
+- Cache parent species from Cobblemon's OpenPasturePacket after opening a monitored pasture GUI.
+- Added OpenPasturePacket diagnostics and conservative parent-based egg inference from that GUI cache.
+
 ## 1.4.3
 
 - Changed `debug pasture` to inspect persisted monitoring targets instead of the crosshair.

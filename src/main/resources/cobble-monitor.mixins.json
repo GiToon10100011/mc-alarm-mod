@@ -4,6 +4,8 @@
   "package": "com.example.cobblemonitor.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "PokeSnackBlockParticlesHandlerMixin"
+    "PokeSnackBlockParticlesHandlerMixin",
+    "ClientPlayerInteractionManagerMixin",
+    "OpenPastureHandlerMixin"
   ]
 }

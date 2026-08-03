@@ -88,6 +88,13 @@ For a new egg, the alert follows this order:
    add its Discord pixel-sprite thumbnail.
 4. If several species are possible, list candidates and do not choose a sprite.
 
+If the normal BlockEntity has no parent data, right-click and open that monitored
+pasture's Cobblemon GUI once. The GUI's `OpenPasturePacket` contains parent
+species, which Cobble Monitor caches for the current game session. Re-open the
+GUI after changing the pasture Pokemon. A confirmed egg with a Ditto + one
+species or a same-species pair can then receive a conservative inferred species
+and sprite; other combinations keep the parent names without guessing.
+
 `/cobble-monitor debug pasture` inspects all saved pasture registrations rather
 than the crosshair. It shows configured coordinates, chunk availability,
 resolved base, `HAS_EGG`, BlockEntity, local egg stacks, parent species,
@@ -95,6 +102,8 @@ possible results, tethered-entry count, and resolved Pokemon count. Use
 `/cobble-monitor debug pasture looking` only for crosshair diagnostics. Pasture
 notification embeds omit Egg Count because the client cannot reliably receive
 the egg inventory; exact counts are reserved for the future server companion.
+The registered-target output also reports the latest `OpenPasturePacket` DTO
+species and whether it was cached for a monitored pasture.
 
 ## Poke Snack monitoring
 

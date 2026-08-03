@@ -6,6 +6,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,6 +180,29 @@ public final class CobbleMonitorClient implements ClientModInitializer {
     public static void handleSnackPacket(Object packet) {
         if (snackMonitorProvider != null) {
             snackMonitorProvider.handlePacket(packet);
+        }
+    }
+
+    /** Records the monitored pasture a player has just interacted with before its GUI opens. */
+    public static void handlePastureBlockInteraction(BlockPos blockPos) {
+        if (activeInstance == null || activeInstance.pastureEggNotifier == null) {
+            return;
+        }
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world != null) {
+            activeInstance.pastureEggNotifier.markPastureInteraction(client.world, blockPos);
+        }
+    }
+
+    /** Receives Cobblemon's pasture GUI data for an explicitly tracked interaction. */
+    public static void handleOpenPasturePacket(Object packet) {
+        if (activeInstance == null || activeInstance.pastureEggNotifier == null
+                || !(packet instanceof com.cobblemon.mod.common.net.messages.client.pasture.OpenPasturePacket openPacket)) {
+            return;
+        }
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world != null) {
+            activeInstance.pastureEggNotifier.cacheOpenedPasture(client.world, openPacket);
         }
     }
 
