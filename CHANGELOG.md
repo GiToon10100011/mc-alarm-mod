@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.2
+
+- Removed implementation-oriented `HAS_EGG` transition wording from the pasture registration message.
+
 ## 1.5.1
 
 - Explain the one-time pasture GUI synchronization step when registering a monitoring target.

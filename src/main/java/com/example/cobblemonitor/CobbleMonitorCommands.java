@@ -310,7 +310,6 @@ public final class CobbleMonitorCommands {
     private static int pastureRegistered(BlockPos basePos, boolean updated) {
         feedback("Pasture monitor " + (updated ? "updated" : "added") + " at " + basePos.toShortString() + ".");
         feedback("Tip: open this pasture once to cache parents for detailed egg alerts.");
-        feedback("Only future HAS_EGG false -> true changes trigger a new egg alert.");
         return 1;
     }
 
