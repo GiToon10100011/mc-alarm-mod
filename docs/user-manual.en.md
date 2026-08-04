@@ -90,8 +90,9 @@ For a new egg, the alert follows this order:
 
 If the normal BlockEntity has no parent data, right-click and open that monitored
 pasture's Cobblemon GUI once. The GUI's `OpenPasturePacket` contains parent
-species, which Cobble Monitor caches for the current game session. Re-open the
-GUI after changing the pasture Pokemon. A confirmed egg with a Ditto + one
+species, which Cobble Monitor caches for the current game session. While that
+GUI is open, adding or removing a pasture Pokemon updates that cache immediately.
+A confirmed egg with a Ditto + one
 species or a same-species pair can then receive a conservative inferred species
 and sprite; other combinations keep the parent names without guessing.
 

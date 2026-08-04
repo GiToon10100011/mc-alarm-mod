@@ -206,6 +206,31 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         }
     }
 
+    /** Receives an in-GUI Cobblemon pasture addition for the active monitored pasture. */
+    public static void handlePokemonPasturedPacket(Object packet) {
+        if (activeInstance == null || activeInstance.pastureEggNotifier == null
+                || !(packet instanceof com.cobblemon.mod.common.net.messages.client.pasture.PokemonPasturedPacket pastured)) {
+            return;
+        }
+        activeInstance.pastureEggNotifier.cachePasturedPokemon(pastured.getPasturePokemonDTO());
+    }
+
+    /** Receives an in-GUI Cobblemon pasture removal for the active monitored pasture. */
+    public static void handlePokemonUnpasturedPacket(Object packet) {
+        if (activeInstance == null || activeInstance.pastureEggNotifier == null
+                || !(packet instanceof com.cobblemon.mod.common.net.messages.client.pasture.PokemonUnpasturedPacket unpastured)) {
+            return;
+        }
+        activeInstance.pastureEggNotifier.cacheUnpasturedPokemon(unpastured.getPokemonId());
+    }
+
+    /** Clears the packet-to-pasture association when Cobblemon closes its pasture GUI. */
+    public static void handleClosePasturePacket() {
+        if (activeInstance != null && activeInstance.pastureEggNotifier != null) {
+            activeInstance.pastureEggNotifier.closePastureGui();
+        }
+    }
+
     /** Returns runtime diagnostics without exposing notification credentials. */
     public static List<String> debugStatusLines() {
         if (activeInstance == null || activeInstance.config == null) {

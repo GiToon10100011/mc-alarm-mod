@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /** Detects egg presence transitions on explicitly registered pasture blocks. */
 public final class PastureEggNotifier {
@@ -44,9 +45,11 @@ public final class PastureEggNotifier {
     private final Map<String, Boolean> observedStates = new java.util.HashMap<>();
     private final Map<String, List<CachedParentSpecies>> guiCachedParents = new java.util.HashMap<>();
     private String pendingGuiPastureKey;
+    private String activeGuiPastureKey;
     private long pendingGuiPastureExpiresAt;
     private String lastOpenPasturePacket = "none";
     private String lastOpenPastureCacheStatus = "none";
+    private String lastPastureCacheUpdate = "none";
 
     public PastureEggNotifier(ConfigManager configManager, NotificationService notificationService) {
         this.configManager = configManager;
@@ -61,13 +64,16 @@ public final class PastureEggNotifier {
         observedStates.clear();
         guiCachedParents.clear();
         pendingGuiPastureKey = null;
+        activeGuiPastureKey = null;
         pendingGuiPastureExpiresAt = 0L;
         lastOpenPasturePacket = "none";
         lastOpenPastureCacheStatus = "none";
+        lastPastureCacheUpdate = "none";
     }
 
     /** Arms a one-shot association before Cobblemon opens a pasture GUI. */
     public void markPastureInteraction(ClientWorld world, BlockPos interactedPos) {
+        activeGuiPastureKey = null;
         BlockPos base = resolvePastureBase(world, interactedPos);
         if (base == null) {
             return;
@@ -88,10 +94,9 @@ public final class PastureEggNotifier {
         List<CachedParentSpecies> parents = new ArrayList<>();
         List<String> species = new ArrayList<>();
         for (OpenPasturePacket.PasturePokemonDataDTO data : packet.getTetheredPokemon()) {
-            Species resolved = PokemonSpecies.getByIdentifier(data.getSpecies());
-            String displayName = resolved == null ? data.getSpecies().getPath() : resolved.getName();
-            parents.add(new CachedParentSpecies(data.getSpecies(), displayName));
-            species.add(displayName);
+            CachedParentSpecies parent = toCachedParent(data);
+            parents.add(parent);
+            species.add(parent.displayName());
         }
         lastOpenPasturePacket = "pastureId=" + packet.getPastureId()
                 + ", DTOs=" + species.size()
@@ -101,10 +106,49 @@ public final class PastureEggNotifier {
             return;
         }
         guiCachedParents.put(pendingGuiPastureKey, parents);
+        activeGuiPastureKey = pendingGuiPastureKey;
         LOGGER.info("Cached {} pasture parent species from OpenPasturePacket", species.size());
         lastOpenPastureCacheStatus = "cached for " + pendingGuiPastureKey;
         pendingGuiPastureKey = null;
         pendingGuiPastureExpiresAt = 0L;
+    }
+
+    /** Updates the active monitored pasture cache when Cobblemon adds a Pokemon in its GUI. */
+    public void cachePasturedPokemon(OpenPasturePacket.PasturePokemonDataDTO data) {
+        if (activeGuiPastureKey == null) {
+            lastPastureCacheUpdate = "ignored PokemonPasturedPacket: no active monitored pasture GUI";
+            return;
+        }
+        List<CachedParentSpecies> cached = new ArrayList<>(guiCachedParents.getOrDefault(activeGuiPastureKey, List.of()));
+        cached.removeIf(parent -> parent.pokemonId().equals(data.getPokemonId()));
+        cached.add(toCachedParent(data));
+        guiCachedParents.put(activeGuiPastureKey, cached);
+        lastPastureCacheUpdate = "PokemonPasturedPacket cached for " + activeGuiPastureKey;
+        LOGGER.info("Pasture cache updated using PokemonPasturedPacket");
+    }
+
+    /** Updates the active monitored pasture cache when Cobblemon removes a Pokemon in its GUI. */
+    public void cacheUnpasturedPokemon(UUID pokemonId) {
+        if (activeGuiPastureKey == null) {
+            lastPastureCacheUpdate = "ignored PokemonUnpasturedPacket: no active monitored pasture GUI";
+            return;
+        }
+        List<CachedParentSpecies> cached = new ArrayList<>(guiCachedParents.getOrDefault(activeGuiPastureKey, List.of()));
+        cached.removeIf(parent -> parent.pokemonId().equals(pokemonId));
+        guiCachedParents.put(activeGuiPastureKey, cached);
+        lastPastureCacheUpdate = "PokemonUnpasturedPacket cached for " + activeGuiPastureKey;
+        LOGGER.info("Pasture cache updated using PokemonUnpasturedPacket");
+    }
+
+    /** Prevents later pasture packets from being associated after the GUI closes. */
+    public void closePastureGui() {
+        activeGuiPastureKey = null;
+    }
+
+    private static CachedParentSpecies toCachedParent(OpenPasturePacket.PasturePokemonDataDTO data) {
+        Species resolved = PokemonSpecies.getByIdentifier(data.getSpecies());
+        String displayName = resolved == null ? data.getSpecies().getPath() : resolved.getName();
+        return new CachedParentSpecies(data.getPokemonId(), data.getSpecies(), displayName);
     }
 
     public void tick(MinecraftClient client) {
@@ -549,6 +593,7 @@ public final class PastureEggNotifier {
         }
         lines.add("Last OpenPasturePacket: " + lastOpenPasturePacket);
         lines.add("OpenPasture cache: " + lastOpenPastureCacheStatus);
+        lines.add("Last pasture cache update: " + lastPastureCacheUpdate);
         return lines;
     }
 
@@ -589,7 +634,7 @@ public final class PastureEggNotifier {
     }
 
     /** Preserves the exact server-provided identifier alongside its display name. */
-    private record CachedParentSpecies(Identifier speciesId, String displayName) {
+    private record CachedParentSpecies(UUID pokemonId, Identifier speciesId, String displayName) {
     }
 
     /** Couples the display name with the exact species required for its sprite. */

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1
+
+- Update a monitored pasture's cached parents immediately from Cobblemon's verified PokemonPastured and PokemonUnpastured GUI packets.
+
 ## 1.6.0
 
 - Added Cobblemon form metadata to Snack notifications.

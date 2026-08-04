@@ -6,6 +6,9 @@
   "client": [
     "PokeSnackBlockParticlesHandlerMixin",
     "ClientPlayerInteractionManagerMixin",
-    "OpenPastureHandlerMixin"
+    "OpenPastureHandlerMixin",
+    "PokemonPasturedHandlerMixin",
+    "PokemonUnpasturedHandlerMixin",
+    "ClosePastureHandlerMixin"
   ]
 }

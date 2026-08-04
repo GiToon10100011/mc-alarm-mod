@@ -40,8 +40,8 @@ below.
 
 1. Install Fabric Loader and Fabric API.
 2. Install Cobblemon, and Cobbreeding if you use pasture egg monitoring.
-3. Put `cobble-monitor-1.6.0.jar` in the instance `mods` folder.
-4. Do **not** put `cobble-monitor-1.6.0-sources.jar` in `mods`.
+3. Put `cobble-monitor-1.6.1.jar` in the instance `mods` folder.
+4. Do **not** put `cobble-monitor-1.6.1-sources.jar` in `mods`.
 5. Start the game once. The config is created at
    `.minecraft/config/cobble-monitor.json`.
 
@@ -124,8 +124,9 @@ than guessing a potentially wrong Pokemon.
 
 When the normal pasture BlockEntity does not include parent data, open that
 monitored pasture's Cobblemon GUI once. Cobble Monitor caches the parent species
-from the GUI's `OpenPasturePacket` for the current game session. Open the GUI
-again after changing its Pokemon. For a confirmed egg, a Ditto + one species or
+from the GUI's `OpenPasturePacket` for the current game session. While that GUI
+is open, adding or removing a Pokemon updates the cache immediately. For a
+confirmed egg, a Ditto + one species or
 same-species GUI cache can produce a conservative inferred egg species and
 Discord sprite; other combinations display parents without guessing.
 
