@@ -3,11 +3,13 @@ package com.example.cobblemonitor;
 import com.cobblemon.mod.common.block.entity.PokeSnackBlockEntity;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.state.property.Property;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -27,6 +29,9 @@ public final class SnackMonitorProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.LOGGER_NAME);
     private static final double RESOLUTION_RADIUS = 5.0D;
     private static final int RESOLUTION_TICKS = 6;
+    private static final String BITES_PROPERTY = "bites";
+    /** Cobblemon's PokeSnackBlock removes the block once a bite exceeds this value. */
+    private static final int MAX_BITES = 8;
 
     private final ConfigManager configManager;
     private final Deque<PendingSnack> pendingSnacks = new ArrayDeque<>();
@@ -85,8 +90,30 @@ public final class SnackMonitorProvider {
         pendingSnacks.addLast(new PendingSnack(
                 client.world,
                 snackPacket.getBlockPos(),
-                snackPacket.getEntityPos()
+                snackPacket.getEntityPos(),
+                readRemainingSnacks(client.world, snackPacket.getBlockPos())
         ));
+    }
+
+    /**
+     * Cobblemon sends this packet before it applies the bite, so the block state
+     * read here is the count before the current Pokemon eats. Reading it later
+     * would race the block update that follows the packet.
+     */
+    private static Integer readRemainingSnacks(ClientWorld world, BlockPos blockPos) {
+        BlockState state = world.getBlockState(blockPos);
+        for (Property<?> property : state.getProperties()) {
+            if (BITES_PROPERTY.equals(property.getName())) {
+                try {
+                    int bites = Integer.parseInt(String.valueOf(state.get(property)));
+                    return Math.max(0, MAX_BITES - bites);
+                } catch (NumberFormatException exception) {
+                    LOGGER.debug("Could not read the Poke Snack bite count", exception);
+                    return null;
+                }
+            }
+        }
+        return null;
     }
 
     public void tick(MinecraftClient client) {
@@ -146,6 +173,11 @@ public final class SnackMonitorProvider {
         } else {
             fields.put("Pokemon", "Unavailable");
             fields.put("Pokemon Detection", "Estimated Pokemon could not be resolved");
+        }
+        if (pending.remainingSnacks != null) {
+            fields.put("Remaining Poke Snacks", pending.remainingSnacks == 0
+                    ? "0 (all Poke Snacks have been consumed)"
+                    : String.valueOf(pending.remainingSnacks));
         }
         fields.put("Snack Position", pending.world.getRegistryKey().getValue() + " " + pending.blockPos.toShortString());
         notificationService.notify(NotificationService.EventType.SNACK_CONSUMED, fields);
@@ -225,12 +257,14 @@ public final class SnackMonitorProvider {
         private final ClientWorld world;
         private final BlockPos blockPos;
         private final BlockPos entityPos;
+        private final Integer remainingSnacks;
         private int age;
 
-        private PendingSnack(ClientWorld world, BlockPos blockPos, BlockPos entityPos) {
+        private PendingSnack(ClientWorld world, BlockPos blockPos, BlockPos entityPos, Integer remainingSnacks) {
             this.world = world;
             this.blockPos = blockPos;
             this.entityPos = entityPos;
+            this.remainingSnacks = remainingSnacks;
         }
     }
 }
