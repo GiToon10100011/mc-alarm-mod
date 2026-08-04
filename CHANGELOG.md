@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.1
+
+- Fixed pasture parents sharing a species and form being reported as one parent. A pasture holding two Hisuian Zorua now shows both in the Discord egg embed and in diagnostics.
+- Clarified pasture diagnostics: the parent line states how many entries are cached, and the last-packet line is explicitly marked as a raw packet echo rather than the cache.
+
 ## 1.8.0
 
 - Added a Pokemon Showdown sprite fallback for regional and alternate forms that PokeAPI's Pokedex-number endpoint cannot address, covering Alolan, Galarian, Hisuian, Paldean, Mega, and Gigantamax forms. PokeAPI remains the primary lookup and the Cobblemon texture remains the final fallback.
