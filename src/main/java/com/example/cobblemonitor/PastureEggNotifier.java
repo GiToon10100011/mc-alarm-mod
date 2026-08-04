@@ -147,8 +147,11 @@ public final class PastureEggNotifier {
 
     private static CachedParentSpecies toCachedParent(OpenPasturePacket.PasturePokemonDataDTO data) {
         Species resolved = PokemonSpecies.getByIdentifier(data.getSpecies());
-        String displayName = resolved == null ? data.getSpecies().getPath() : resolved.getName();
-        return new CachedParentSpecies(data.getPokemonId(), data.getSpecies(), displayName);
+        Set<String> aspects = data.getAspects() == null ? Set.of() : Set.copyOf(data.getAspects());
+        String displayName = resolved == null
+                ? data.getSpecies().getPath()
+                : formatSpeciesDisplay(resolved, aspects);
+        return new CachedParentSpecies(data.getPokemonId(), data.getSpecies(), aspects, displayName);
     }
 
     public void tick(MinecraftClient client) {
@@ -278,6 +281,7 @@ public final class PastureEggNotifier {
                     parents.size(),
                     true,
                     "BlockEntity",
+                    null,
                     null
             );
         } catch (ReflectiveOperationException | RuntimeException exception) {
@@ -296,7 +300,7 @@ public final class PastureEggNotifier {
             int tetheredEntryCount
     ) {
         if (cachedParents == null || cachedParents.isEmpty()) {
-            return new ParentMetadata(Set.of(), Set.of(), tetheredEntryCount, 0, false, "unavailable", null);
+            return new ParentMetadata(Set.of(), Set.of(), tetheredEntryCount, 0, false, "unavailable", null, null);
         }
         InferredEggSpecies inferred = inferEggSpeciesFromGuiParents(cachedParents);
         return new ParentMetadata(
@@ -308,7 +312,8 @@ public final class PastureEggNotifier {
                 cachedParents.size(),
                 true,
                 "OpenPasturePacket cache",
-                inferred.species
+                inferred.species,
+                inferred.form
         );
     }
 
@@ -324,39 +329,57 @@ public final class PastureEggNotifier {
             return InferredEggSpecies.unavailable();
         }
         Set<Species> parentSpecies = new LinkedHashSet<>();
-        Set<Species> nonDitto = new LinkedHashSet<>();
+        List<ResolvedCachedParent> nonDitto = new ArrayList<>();
+        List<ResolvedCachedParent> resolvedParents = new ArrayList<>();
         boolean hasDitto = false;
         for (CachedParentSpecies parent : parentNames) {
             Species species = PokemonSpecies.getByIdentifier(parent.speciesId());
             if (species == null) {
                 return InferredEggSpecies.unavailable();
             }
+            ResolvedCachedParent resolvedParent = new ResolvedCachedParent(
+                    species,
+                    resolveForm(species, parent.aspects())
+            );
+            resolvedParents.add(resolvedParent);
             parentSpecies.add(species);
             if ("ditto".equals(species.getResourceIdentifier().getPath())) {
                 hasDitto = true;
             } else {
-                nonDitto.add(species);
+                nonDitto.add(resolvedParent);
             }
         }
         boolean sameSpeciesPair = parentSpecies.size() == 1 && !hasDitto;
         if (nonDitto.isEmpty() && hasDitto && parentSpecies.size() == 1) {
-            return InferredEggSpecies.of(parentSpecies.iterator().next());
+            ResolvedCachedParent ditto = resolvedParents.getFirst();
+            return InferredEggSpecies.of(ditto.species(), ditto.form());
         }
-        if (nonDitto.size() != 1 || (!hasDitto && !sameSpeciesPair)) {
+        boolean validDittoPair = hasDitto && nonDitto.size() == 1;
+        boolean validSameSpeciesPair = !hasDitto && sameSpeciesPair && nonDitto.size() == 2;
+        if (!validDittoPair && !validSameSpeciesPair) {
             return InferredEggSpecies.unavailable();
         }
-        Species breedingSpecies = nonDitto.iterator().next();
+        if (!hasDitto && !sameForm(nonDitto)) {
+            // The GUI DTO has no gender, so mixed-form same-species pairs cannot
+            // reveal which parent determines the egg form without guessing.
+            return InferredEggSpecies.unavailable();
+        }
+        ResolvedCachedParent breedingParent = nonDitto.getFirst();
+        Species breedingSpecies = breedingParent.species();
+        FormData breedingForm = breedingParent.form() == null
+                ? breedingSpecies.getStandardForm()
+                : breedingParent.form();
         try {
-            FormData baby = BreedingUtilities.INSTANCE.getBaby(breedingSpecies.getStandardForm());
+            FormData baby = BreedingUtilities.INSTANCE.getBaby(breedingForm);
             if (baby != null && baby.getSpecies() != null) {
-                return InferredEggSpecies.of(baby.getSpecies());
+                return InferredEggSpecies.of(baby.getSpecies(), baby);
             }
         } catch (RuntimeException exception) {
             LOGGER.debug("Could not resolve the baby species for cached pasture parents", exception);
         }
         // The server confirmed HAS_EGG. Preserve a useful, deterministic result
         // even if Cobbreeding's baby lookup cannot resolve a special form.
-        return InferredEggSpecies.of(breedingSpecies);
+        return InferredEggSpecies.of(breedingSpecies, breedingForm);
     }
 
     /**
@@ -388,7 +411,8 @@ public final class PastureEggNotifier {
             LOGGER.info("Pasture egg species inferred from Cobbreeding parents at {}: {}", pos, species);
             fields.put("Species", species + " (inferred from parents)");
             if (parents.inferredEggSpecies != null) {
-                addPokemonThumbnail(fields, parents.inferredEggSpecies);
+                addFormMetadata(fields, parents.inferredEggForm);
+                addPokemonThumbnail(fields, parents.inferredEggSpecies, parents.inferredEggForm);
             } else {
                 addPokemonThumbnail(fields, species);
             }
@@ -417,11 +441,51 @@ public final class PastureEggNotifier {
 
     /** Adds a PokeAPI thumbnail from the exact Cobblemon species instance. */
     private static void addPokemonThumbnail(Map<String, Object> fields, Species species) {
+        addPokemonThumbnail(fields, species, null);
+    }
+
+    /** Uses Cobblemon's texture source when the inferred species has a non-base form. */
+    private static void addPokemonThumbnail(Map<String, Object> fields, Species species, FormData form) {
         if (species != null) {
             fields.put(
                     NotificationService.DISCORD_THUMBNAIL_URL,
-                    NotificationService.pokemonSpriteUrl(species.getNationalPokedexNumber(), false)
+                    NotificationService.cobblemonSpriteUrl(
+                            species.getNationalPokedexNumber(),
+                            species.getResourceIdentifier().getPath(),
+                            form == null ? List.of() : form.getAspects(),
+                            false
+                    )
             );
+        }
+    }
+
+    private static FormData resolveForm(Species species, Set<String> aspects) {
+        try {
+            return species.getForm(aspects);
+        } catch (RuntimeException exception) {
+            LOGGER.debug("Could not resolve a cached pasture Pokemon form", exception);
+            return species.getStandardForm();
+        }
+    }
+
+    private static String formatSpeciesDisplay(Species species, Set<String> aspects) {
+        FormData form = resolveForm(species, aspects);
+        if (form != null && !form.getAspects().isEmpty() && form.getName() != null && !form.getName().isBlank()) {
+            return species.getName() + " (" + form.getName() + ")";
+        }
+        return species.getName();
+    }
+
+    private static boolean sameForm(List<ResolvedCachedParent> parents) {
+        return parents.stream()
+                .map(parent -> parent.form() == null ? List.<String>of() : parent.form().getAspects())
+                .distinct()
+                .count() == 1;
+    }
+
+    private static void addFormMetadata(Map<String, Object> fields, FormData form) {
+        if (form != null && !form.getAspects().isEmpty() && form.getName() != null && !form.getName().isBlank()) {
+            fields.put("Form", form.getName());
         }
     }
 
@@ -626,27 +690,37 @@ public final class PastureEggNotifier {
             int resolvedPokemonCount,
             boolean usable,
             String source,
-            Species inferredEggSpecies
+            Species inferredEggSpecies,
+            FormData inferredEggForm
     ) {
         private static ParentMetadata unavailable() {
-            return new ParentMetadata(Set.of(), Set.of(), 0, 0, false, "unavailable", null);
+            return new ParentMetadata(Set.of(), Set.of(), 0, 0, false, "unavailable", null, null);
         }
     }
 
     /** Preserves the exact server-provided identifier alongside its display name. */
-    private record CachedParentSpecies(UUID pokemonId, Identifier speciesId, String displayName) {
+    private record CachedParentSpecies(
+            UUID pokemonId,
+            Identifier speciesId,
+            Set<String> aspects,
+            String displayName
+    ) {
     }
 
     /** Couples the display name with the exact species required for its sprite. */
-    private record InferredEggSpecies(Set<String> names, Species species) {
+    private record InferredEggSpecies(Set<String> names, Species species, FormData form) {
         private static InferredEggSpecies unavailable() {
-            return new InferredEggSpecies(Set.of(), null);
+            return new InferredEggSpecies(Set.of(), null, null);
         }
 
-        private static InferredEggSpecies of(Species species) {
+        private static InferredEggSpecies of(Species species, FormData form) {
             return species == null
                     ? unavailable()
-                    : new InferredEggSpecies(Set.of(species.getName()), species);
+                    : new InferredEggSpecies(Set.of(species.getName()), species, form);
         }
+    }
+
+    /** A GUI parent DTO resolved into the exact form used for Cobbreeding inference. */
+    private record ResolvedCachedParent(Species species, FormData form) {
     }
 }

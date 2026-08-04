@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.2
+
+- Preserve verified Cobblemon parent forms when inferring pasture egg species, and show the inferred egg form with its matching thumbnail.
+
 ## 1.6.1
 
 - Update a monitored pasture's cached parents immediately from Cobblemon's verified PokemonPastured and PokemonUnpastured GUI packets.

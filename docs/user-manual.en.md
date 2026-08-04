@@ -94,7 +94,9 @@ species, which Cobble Monitor caches for the current game session. While that
 GUI is open, adding or removing a pasture Pokemon updates that cache immediately.
 A confirmed egg with a Ditto + one
 species or a same-species pair can then receive a conservative inferred species
-and sprite; other combinations keep the parent names without guessing.
+and sprite. When Cobbreeding returns a form, the alert also displays it and uses
+the matching Cobblemon texture; other combinations keep the parent names without
+guessing.
 
 An egg alert still sends when this parent data is unavailable, and its metadata
 reminds you to open the pasture once for detailed information. Monitoring uses a
