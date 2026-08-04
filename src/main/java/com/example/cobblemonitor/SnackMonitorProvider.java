@@ -191,6 +191,12 @@ public final class SnackMonitorProvider {
     private static void addPokemonMetadata(Map<String, Object> fields, PokemonEntity entity) {
         Pokemon pokemon = entity.getPokemon();
         fields.put("Species", pokemon.getSpecies().getName());
+        String formName = pokemon.getForm().getName();
+        List<String> formAspects = pokemon.getForm().getAspects();
+        if (!formAspects.isEmpty() && formName != null && !formName.isBlank()
+                && !"base".equalsIgnoreCase(formName)) {
+            fields.put("Form", formName);
+        }
         fields.put("Level", pokemon.getLevel());
         fields.put("Shiny", pokemon.getShiny());
         fields.put("Gender", String.valueOf(pokemon.getGender()));
@@ -198,8 +204,10 @@ public final class SnackMonitorProvider {
         fields.put("Pokemon Position", entity.getBlockPos().toShortString());
         fields.put(
                 NotificationService.DISCORD_THUMBNAIL_URL,
-                NotificationService.pokemonSpriteUrl(
+                NotificationService.cobblemonSpriteUrl(
                         pokemon.getSpecies().getNationalPokedexNumber(),
+                        pokemon.getSpecies().getResourceIdentifier().getPath(),
+                        formAspects,
                         pokemon.getShiny()
                 )
         );

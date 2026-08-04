@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0
+
+- Added Cobblemon form metadata to Snack notifications.
+- Use the verified Cobblemon 1.7.3 texture for non-base Snack forms, including Hisuian Zorua and shiny variants.
+
 ## 1.5.4
 
 - Fixed Discord egg thumbnails by carrying the exact inferred Cobblemon Species through to PokeAPI sprite URL generation.

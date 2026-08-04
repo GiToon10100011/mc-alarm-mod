@@ -14,14 +14,17 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /** Sends event notifications asynchronously to Discord and ntfy. */
 public final class NotificationService {
     /** Internal metadata key for a Discord-only thumbnail. It is never rendered as a field. */
     public static final String DISCORD_THUMBNAIL_URL = "_discordThumbnailUrl";
     private static final String POKEAPI_SPRITE_BASE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/";
+    private static final String COBBLEMON_TEXTURE_BASE_URL = "https://gitlab.com/cable-mc/cobblemon/-/raw/1.7.3/common/src/main/resources/assets/cobblemon/textures/pokemon/";
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.LOGGER_NAME);
     private static final int DISCORD_COLOR_NIGHT = 0x26356B;
     private static final int DISCORD_COLOR_DAY = 0xF1C40F;
@@ -254,6 +257,42 @@ public final class NotificationService {
         }
         String variantPath = shiny ? "shiny/" : "";
         return POKEAPI_SPRITE_BASE_URL + variantPath + nationalPokedexNumber + ".png";
+    }
+
+    /**
+     * Returns the installed Cobblemon 1.7.3 texture for a non-base form.
+     * Base forms continue using PokeAPI's compact sprite endpoint.
+     */
+    public static String cobblemonSpriteUrl(
+            int nationalPokedexNumber,
+            String speciesPath,
+            List<String> formAspects,
+            boolean shiny
+    ) {
+        if (formAspects == null || formAspects.isEmpty()) {
+            return pokemonSpriteUrl(nationalPokedexNumber, shiny);
+        }
+        if (nationalPokedexNumber <= 0 || speciesPath == null || speciesPath.isBlank()) {
+            return "";
+        }
+
+        String normalizedSpecies = normalizeTexturePart(speciesPath);
+        String aspectSuffix = formAspects.stream()
+                .filter(aspect -> aspect != null && !aspect.isBlank())
+                .map(NotificationService::normalizeTexturePart)
+                .sorted()
+                .collect(Collectors.joining("_"));
+        if (normalizedSpecies.isBlank() || aspectSuffix.isBlank()) {
+            return pokemonSpriteUrl(nationalPokedexNumber, shiny);
+        }
+
+        String folder = String.format(Locale.ROOT, "%04d_%s", nationalPokedexNumber, normalizedSpecies);
+        String filename = normalizedSpecies + "_" + aspectSuffix + (shiny ? "_shiny" : "") + ".png";
+        return COBBLEMON_TEXTURE_BASE_URL + folder + "/" + filename;
+    }
+
+    private static String normalizeTexturePart(String value) {
+        return value.trim().toLowerCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
     }
 
     private static String truncate(String value, int maxLength) {
