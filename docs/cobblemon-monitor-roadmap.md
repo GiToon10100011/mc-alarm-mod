@@ -116,6 +116,11 @@ PastureEggCreatedPayload
   eggCount                 # exact server-authoritative count
   exactSpecies
   form
+  individualValues         # HP, Attack, Defense, Sp. Attack, Sp. Defense, Speed
+  shiny                    # actual generated egg result, not a parent-based guess
+  nature
+  ability
+  gender
   parentA
   parentB
   inferenceSource          # server event | inventory | breeding calculation
@@ -131,6 +136,9 @@ PastureEggCreatedPayload
   unless an administrator intentionally enables shared notifications.
 - Report `serverAuthoritative=true` in diagnostics so users can distinguish a
   remote server event from local chunk-based observation.
+- Read IVs, shiny state, nature, ability, gender, and form from the generated
+  egg's authoritative Pokemon data at creation time. Do not infer those values
+  from its parents or expose them as exact client-only data.
 
 ### Migration and tests
 
