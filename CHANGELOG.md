@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.3
+
+- Show the detected Pokemon (and form when available) in the Discord Snack Embed title.
+
 ## 1.6.2
 
 - Preserve verified Cobblemon parent forms when inferring pasture egg species, and show the inferred egg form with its matching thumbnail.

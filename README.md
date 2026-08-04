@@ -40,8 +40,8 @@ below.
 
 1. Install Fabric Loader and Fabric API.
 2. Install Cobblemon, and Cobbreeding if you use pasture egg monitoring.
-3. Put `cobble-monitor-1.6.2.jar` in the instance `mods` folder.
-4. Do **not** put `cobble-monitor-1.6.2-sources.jar` in `mods`.
+3. Put `cobble-monitor-1.6.3.jar` in the instance `mods` folder.
+4. Do **not** put `cobble-monitor-1.6.3-sources.jar` in `mods`.
 5. Start the game once. The config is created at
    `.minecraft/config/cobble-monitor.json`.
 
@@ -163,6 +163,8 @@ form, and a matching normal or shiny thumbnail. Base forms use PokeAPI sprites;
 non-base forms use their Cobblemon 1.7.3 texture. The snack placer is resolved from
 the current player list and then from a local UUID-to-name cache, so previously
 seen players can still be named while offline.
+When a nearby Pokemon is resolved, its species and form are also placed in the
+Discord Embed title for quick scanning; the estimated-detection field remains.
 
 ## Diagnostics
 

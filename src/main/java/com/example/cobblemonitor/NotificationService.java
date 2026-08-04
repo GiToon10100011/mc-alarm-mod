@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 public final class NotificationService {
     /** Internal metadata key for a Discord-only thumbnail. It is never rendered as a field. */
     public static final String DISCORD_THUMBNAIL_URL = "_discordThumbnailUrl";
+    /** Internal metadata key for a Discord-only dynamic Embed title. */
+    public static final String DISCORD_TITLE = "_discordTitle";
     private static final String POKEAPI_SPRITE_BASE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/";
     private static final String COBBLEMON_TEXTURE_BASE_URL = "https://gitlab.com/cable-mc/cobblemon/-/raw/1.7.3/common/src/main/resources/assets/cobblemon/textures/pokemon/";
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.LOGGER_NAME);
@@ -92,6 +94,16 @@ public final class NotificationService {
         };
     }
 
+    /** Creates a localized snack title while retaining the detected Pokemon name. */
+    public static String snackDiscordTitle(String pokemonName) {
+        if (pokemonName == null || pokemonName.isBlank()) {
+            return localizedMessageFor(EventType.SNACK_CONSUMED);
+        }
+        return usesKoreanLanguage()
+                ? "🍪 " + pokemonName + " - 포케스낵 소비"
+                : "🍪 " + pokemonName + " - Snack Consumed";
+    }
+
     private void sendDiscord(EventType eventType, String message, Map<String, Object> metadata) {
         try {
             URI webhookUri = validHttpUri(config.discordWebhook.trim());
@@ -100,7 +112,11 @@ public final class NotificationService {
 
             JsonArray embeds = new JsonArray();
             JsonObject embed = new JsonObject();
-            embed.addProperty("title", message);
+            Object titleOverride = metadata.remove(DISCORD_TITLE);
+            String title = titleOverride == null || String.valueOf(titleOverride).isBlank()
+                    ? message
+                    : truncate(String.valueOf(titleOverride), 256);
+            embed.addProperty("title", title);
             embed.addProperty("description", descriptionFor(eventType));
             embed.addProperty("color", colorFor(eventType));
 

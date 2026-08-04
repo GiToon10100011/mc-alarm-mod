@@ -137,6 +137,10 @@ public final class SnackMonitorProvider {
         }
 
         if (pokemonEntity != null) {
+            fields.put(
+                    NotificationService.DISCORD_TITLE,
+                    NotificationService.snackDiscordTitle(pokemonDisplayName(pokemonEntity.getPokemon()))
+            );
             addPokemonMetadata(fields, pokemonEntity);
             fields.put("Pokemon Detection", "Estimated Pokemon (near packet position)");
         } else {
@@ -211,6 +215,15 @@ public final class SnackMonitorProvider {
                         pokemon.getShiny()
                 )
         );
+    }
+
+    private static String pokemonDisplayName(Pokemon pokemon) {
+        String formName = pokemon.getForm().getName();
+        if (!pokemon.getForm().getAspects().isEmpty() && formName != null && !formName.isBlank()
+                && !"base".equalsIgnoreCase(formName)) {
+            return pokemon.getSpecies().getName() + " (" + formName + ")";
+        }
+        return pokemon.getSpecies().getName();
     }
 
     private static final class PendingSnack {

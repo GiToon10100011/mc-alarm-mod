@@ -128,6 +128,8 @@ any external account or server history service.
 Snack embeds also include the actual Cobblemon form when it is available. Base
 forms use PokeAPI pixel sprites; non-base forms use the matching Cobblemon 1.7.3
 texture, so regional forms such as Hisuian Zorua are not shown as base Zorua.
+When a nearby Pokemon is resolved, its species and form also appear in the
+Discord Embed title; the separate estimated-detection field remains visible.
 
 ## Diagnostics
 
