@@ -268,7 +268,7 @@ public final class PastureEggNotifier {
         }
         try {
             List<Pokemon> parents = BreedingUtilities.getPokemon(pasture.getTetheredPokemon());
-            Set<String> parentSpecies = new LinkedHashSet<>();
+            List<String> parentSpecies = new ArrayList<>();
             for (Pokemon parent : parents) {
                 parentSpecies.add(parent.getSpecies().getName());
             }
@@ -300,13 +300,13 @@ public final class PastureEggNotifier {
             int tetheredEntryCount
     ) {
         if (cachedParents == null || cachedParents.isEmpty()) {
-            return new ParentMetadata(Set.of(), Set.of(), tetheredEntryCount, 0, false, "unavailable", null, null);
+            return new ParentMetadata(List.of(), Set.of(), tetheredEntryCount, 0, false, "unavailable", null, null);
         }
         InferredEggSpecies inferred = inferEggSpeciesFromGuiParents(cachedParents);
         return new ParentMetadata(
                 cachedParents.stream()
                         .map(CachedParentSpecies::displayName)
-                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)),
+                        .toList(),
                 inferred.names,
                 tetheredEntryCount,
                 cachedParents.size(),
@@ -593,7 +593,8 @@ public final class PastureEggNotifier {
         lines.add("Inventory synced=" + metadata.inventorySynced
                 + ", eggCount=" + metadata.eggCount
                 + ", species=" + (metadata.species.isEmpty() ? "unavailable" : String.join(", ", metadata.species)));
-        lines.add("Pasture parents=" + (metadata.parents.species.isEmpty()
+        lines.add("Pasture parents (cached, " + metadata.parents.species.size() + ")="
+                + (metadata.parents.species.isEmpty()
                 ? "unavailable"
                 : String.join(", ", metadata.parents.species)));
         lines.add("Tethered entries=" + metadata.parents.tetheredEntryCount
@@ -655,7 +656,8 @@ public final class PastureEggNotifier {
             lines.add("Tethered entries=" + metadata.parents.tetheredEntryCount
                     + ", resolved Pokemon=" + metadata.parents.resolvedPokemonCount
                     + ", parent data usable=" + metadata.parents.usable);
-            lines.add("Parents=" + (metadata.parents.species.isEmpty()
+            lines.add("Parents (cached, " + metadata.parents.species.size() + ")="
+                    + (metadata.parents.species.isEmpty()
                     ? "unavailable"
                     : String.join(", ", metadata.parents.species)));
             lines.add("Possible egg species=" + (metadata.parents.possibleEggSpecies.isEmpty()
@@ -663,7 +665,10 @@ public final class PastureEggNotifier {
                     : String.join(", ", metadata.parents.possibleEggSpecies)));
             lines.add("Parent source=" + metadata.parents.source);
         }
-        lines.add("Last OpenPasturePacket: " + lastOpenPasturePacket);
+        // Explicitly marked as a raw packet echo: it reports what the last GUI open
+        // contained, not the current cache, and the two differ whenever the pasture
+        // changed after that packet.
+        lines.add("Last OpenPasturePacket (raw packet, NOT the cache): " + lastOpenPasturePacket);
         lines.add("OpenPasture cache: " + lastOpenPastureCacheStatus);
         lines.add("Last pasture cache update: " + lastPastureCacheUpdate);
         return lines;
@@ -691,8 +696,13 @@ public final class PastureEggNotifier {
     ) {
     }
 
+    /**
+     * Parent names are a List, not a Set: a pasture may legitimately hold two
+     * parents with the same species and form, and collapsing them would report
+     * one parent when there are two.
+     */
     private record ParentMetadata(
-            Set<String> species,
+            List<String> species,
             Set<String> possibleEggSpecies,
             int tetheredEntryCount,
             int resolvedPokemonCount,
@@ -702,7 +712,7 @@ public final class PastureEggNotifier {
             FormData inferredEggForm
     ) {
         private static ParentMetadata unavailable() {
-            return new ParentMetadata(Set.of(), Set.of(), 0, 0, false, "unavailable", null, null);
+            return new ParentMetadata(List.of(), Set.of(), 0, 0, false, "unavailable", null, null);
         }
     }
 

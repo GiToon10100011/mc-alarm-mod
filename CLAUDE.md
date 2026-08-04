@@ -284,6 +284,15 @@ asking first.
   `tick()` prunes with `currentTick - value > 40`, but `world.getTime()` resets on
   world change, so entries stamped with a large tick never match. Keys are
   dimension-scoped so no incorrect dedup can result — cosmetic memory only.
+- **`ClosePasturePacket` can arrive while the pasture GUI is still open.**
+  `PokemonPastureBlockEntity.canAddPokemon` sends one to the acting player when a
+  tether is rejected with `pasture.too_many_nearby` — verified in bytecode, the
+  screen is *not* closed. `ClosePastureHandlerMixin` then nulls
+  `activeGuiPastureKey`, so every later Pastured/Unpastured packet in that session
+  is silently dropped with `"ignored ...: no active monitored pasture GUI"`. The
+  same three server handlers also send it when `PastureLinkManager.getLinkByPlayer`
+  returns null, which happens if the player moves more than 10 blocks away. A fix
+  would clear the flag on actual screen close rather than on this packet.
 - **`COBBLEMON_TEXTURE_BASE_URL` is pinned to the literal `1.7.3` GitLab tag** and
   will rot when that tag moves or is removed. Layer 2 reduced how often it's
   reached, but it's still the fallback for ~232 forms.
