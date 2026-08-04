@@ -10,6 +10,7 @@ below.
 
 - [Full user manual (English)](docs/user-manual.en.md)
 - [사용자 매뉴얼 (한국어)](docs/user-manual.md)
+- [Working context for contributors](CLAUDE.md) — build setup, architecture, conventions
 - [Cobblemon monitoring roadmap](docs/cobblemon-monitor-roadmap.md)
 - [Reddit post draft](docs/reddit-post.md)
 - [GitHub discovery checklist](docs/github-discovery-checklist.md)
