@@ -14,9 +14,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Sends event notifications asynchronously to Discord and ntfy. */
@@ -27,11 +29,31 @@ public final class NotificationService {
     public static final String DISCORD_TITLE = "_discordTitle";
     private static final String POKEAPI_SPRITE_BASE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/";
     private static final String COBBLEMON_TEXTURE_BASE_URL = "https://gitlab.com/cable-mc/cobblemon/-/raw/1.7.3/common/src/main/resources/assets/cobblemon/textures/pokemon/";
+    private static final String SHOWDOWN_SPRITE_BASE_URL = "https://play.pokemonshowdown.com/sprites/gen5";
+    /**
+     * Cobblemon form aspects that Pokemon Showdown names with a known suffix.
+     * The order is significant: Showdown appends a regional or alternate-form
+     * name before a breed name, so "paldean" + "blaze-breed" is "paldeablaze".
+     */
+    private static final Map<String, String> SHOWDOWN_FORM_SUFFIXES = new LinkedHashMap<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.LOGGER_NAME);
     private static final int DISCORD_COLOR_NIGHT = 0x26356B;
     private static final int DISCORD_COLOR_DAY = 0xF1C40F;
     private static final int DISCORD_COLOR_EGG = 0x58B368;
     private static final int DISCORD_COLOR_SNACK = 0xF39C12;
+
+    static {
+        SHOWDOWN_FORM_SUFFIXES.put("alolan", "alola");
+        SHOWDOWN_FORM_SUFFIXES.put("galarian", "galar");
+        SHOWDOWN_FORM_SUFFIXES.put("hisuian", "hisui");
+        SHOWDOWN_FORM_SUFFIXES.put("paldean", "paldea");
+        SHOWDOWN_FORM_SUFFIXES.put("mega", "mega");
+        SHOWDOWN_FORM_SUFFIXES.put("mega_x", "megax");
+        SHOWDOWN_FORM_SUFFIXES.put("mega_y", "megay");
+        SHOWDOWN_FORM_SUFFIXES.put("gmax", "gmax");
+        SHOWDOWN_FORM_SUFFIXES.put("blaze_breed", "blaze");
+        SHOWDOWN_FORM_SUFFIXES.put("aqua_breed", "aqua");
+    }
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -302,6 +324,14 @@ public final class NotificationService {
             return "";
         }
 
+        // PokeAPI's endpoint is keyed by Pokedex number alone and cannot address a
+        // regional or alternate form, so try Showdown's form-aware sprite before
+        // falling back to the Cobblemon texture below.
+        String showdownSprite = showdownFormSpriteUrl(speciesPath, formAspects, shiny);
+        if (!showdownSprite.isBlank()) {
+            return showdownSprite;
+        }
+
         String normalizedSpecies = normalizeTexturePart(speciesPath);
         String aspectSuffix = formAspects.stream()
                 .filter(aspect -> aspect != null && !aspect.isBlank())
@@ -315,6 +345,44 @@ public final class NotificationService {
         String folder = String.format(Locale.ROOT, "%04d_%s", nationalPokedexNumber, normalizedSpecies);
         String filename = normalizedSpecies + "_" + aspectSuffix + (shiny ? "_shiny" : "") + ".png";
         return COBBLEMON_TEXTURE_BASE_URL + folder + "/" + filename;
+    }
+
+    /**
+     * Returns a Pokemon Showdown sprite only when every aspect of the form maps to
+     * a known Showdown name. An unrecognized aspect returns an empty string so the
+     * caller keeps using its existing fallback.
+     */
+    private static String showdownFormSpriteUrl(String speciesPath, List<String> formAspects, boolean shiny) {
+        Set<String> remainingAspects = new LinkedHashSet<>();
+        for (String aspect : formAspects) {
+            if (aspect != null && !aspect.isBlank()) {
+                remainingAspects.add(normalizeTexturePart(aspect));
+            }
+        }
+        if (remainingAspects.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder formSuffix = new StringBuilder();
+        for (Map.Entry<String, String> entry : SHOWDOWN_FORM_SUFFIXES.entrySet()) {
+            if (remainingAspects.remove(entry.getKey())) {
+                formSuffix.append(entry.getValue());
+            }
+        }
+        if (formSuffix.isEmpty() || !remainingAspects.isEmpty()) {
+            return "";
+        }
+
+        String speciesId = normalizeTexturePart(speciesPath).replaceAll("[^a-z0-9]", "");
+        if (speciesId.isBlank()) {
+            return "";
+        }
+        // Showdown has no plain "tauros-paldea"; its Combat Breed carries the name.
+        if ("tauros".equals(speciesId) && "paldea".contentEquals(formSuffix)) {
+            formSuffix.append("combat");
+        }
+
+        return SHOWDOWN_SPRITE_BASE_URL + (shiny ? "-shiny/" : "/") + speciesId + "-" + formSuffix + ".png";
     }
 
     private static String normalizeTexturePart(String value) {
