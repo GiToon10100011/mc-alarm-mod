@@ -24,6 +24,9 @@ below.
   the egg inventory is not synced
 - Poke Snack consumption alerts from Cobblemon's client packet
 - Pokemon pixel-sprite thumbnails in Discord embeds, including shiny Snack targets
+- Regional and alternate form sprites (Alolan, Galarian, Hisuian, Paldean, Mega,
+  Gigantamax) resolved through Pokemon Showdown when PokeAPI cannot address the form
+- Remaining Poke Snack count in Snack alerts
 - Offline snack placer names cached locally after the client has seen them
 - In-game configuration, help, diagnostics, and manual notification tests
 
@@ -40,8 +43,8 @@ below.
 
 1. Install Fabric Loader and Fabric API.
 2. Install Cobblemon, and Cobbreeding if you use pasture egg monitoring.
-3. Put `cobble-monitor-1.7.0.jar` in the instance `mods` folder.
-4. Do **not** put `cobble-monitor-1.7.0-sources.jar` in `mods`.
+3. Put `cobble-monitor-1.8.0.jar` in the instance `mods` folder.
+4. Do **not** put `cobble-monitor-1.8.0-sources.jar` in `mods`.
 5. Start the game once. The config is created at
    `.minecraft/config/cobble-monitor.json`.
 
@@ -162,11 +165,15 @@ performs a short, local nearest-Pokemon lookup only when that packet arrives.
 
 Discord embeds show the Pokemon species, level, shiny state, gender, position,
 form, and a matching normal or shiny thumbnail. Base forms use PokeAPI sprites;
-non-base forms use their Cobblemon 1.7.3 texture. The snack placer is resolved from
+regional and alternate forms use a Pokemon Showdown sprite, and any remaining form
+falls back to its Cobblemon 1.7.3 texture. The snack placer is resolved from
 the current player list and then from a local UUID-to-name cache, so previously
 seen players can still be named while offline.
 When a nearby Pokemon is resolved, its species and form are also placed in the
 Discord Embed title for quick scanning; the estimated-detection field remains.
+
+Each alert also reports how many Poke Snacks remain on the eaten block, and states
+explicitly when the last Poke Snack has been consumed.
 
 ## Diagnostics
 

@@ -128,10 +128,17 @@ identified later. The cache is local to this Minecraft client and does not query
 any external account or server history service.
 
 Snack embeds also include the actual Cobblemon form when it is available. Base
-forms use PokeAPI pixel sprites; non-base forms use the matching Cobblemon 1.7.3
-texture, so regional forms such as Hisuian Zorua are not shown as base Zorua.
+forms use PokeAPI pixel sprites. Regional and alternate forms — Alolan, Galarian,
+Hisuian, Paldean, Mega, and Gigantamax — use a Pokemon Showdown sprite, because
+PokeAPI's endpoint is keyed by Pokedex number alone and cannot address a form, so
+regional forms such as Hisuian Zorua are not shown as base Zorua. Any form outside
+that set continues to fall back to the matching Cobblemon 1.7.3 texture.
 When a nearby Pokemon is resolved, its species and form also appear in the
 Discord Embed title; the separate estimated-detection field remains visible.
+
+Snack embeds report `Remaining Poke Snacks` as the number of servings left on the
+eaten block after the current Pokemon's bite. A Poke Snack holds nine servings, and
+the last one is reported as `0 (all Poke Snacks have been consumed)`.
 
 ## Diagnostics
 

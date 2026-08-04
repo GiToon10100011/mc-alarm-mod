@@ -19,7 +19,7 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 ## 2. 설치
 
 1. Fabric Loader 0.16.5 이상과 Fabric API를 설치한다.
-2. `cobble-monitor-1.7.0.jar`를 클라이언트의 `mods` 폴더에 넣는다.
+2. `cobble-monitor-1.8.0.jar`를 클라이언트의 `mods` 폴더에 넣는다.
 3. 기존 `nightnotifier` JAR이 있으면 중복 실행을 막기 위해 제거한다.
 4. Cobblemon 기능을 사용할 경우 Cobblemon 1.7.3을 설치한다.
 5. 목장 알을 감시할 경우 Cobbreeding 2.2.2도 설치한다.
@@ -141,6 +141,14 @@ Snack 알림은 읽기 어려운 원시 효과·재료·패킷 정보는 제외�
 포켓몬의 일반/이로치 픽셀 스프라이트가 썸네일로 표시된다. 접속 중 탭 목록에서
 확인한 플레이어의 UUID와 닉네임은 로컬 설정에 캐시되므로, 이후 해당 플레이어가
 오프라인이어도 스낵 설치자로 표시할 수 있다.
+
+리전 폼과 특수 폼(알로라·가라르·히스이·팔데아·메가·거다이맥스)은 PokeAPI가 도감
+번호만으로 폼을 구분할 수 없으므로 Pokemon Showdown 스프라이트를 사용한다. 그 외
+폼은 기존과 동일하게 Cobblemon 1.7.3 텍스처로 대체된다.
+
+Snack 알림에는 `Remaining Poke Snacks` 필드로 해당 블록에 남은 포케스낵 수가
+표시된다. 포케스낵 하나는 9회분이며, 마지막 1회분이 소비되면
+`0 (all Poke Snacks have been consumed)`로 표시된다.
 
 Webhook URL은 비밀번호처럼 취급한다. URL을 공개 저장소나 채팅에 올리지 않는다.
 

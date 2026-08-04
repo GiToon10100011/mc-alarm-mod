@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.0
+
+- Added a Pokemon Showdown sprite fallback for regional and alternate forms that PokeAPI's Pokedex-number endpoint cannot address, covering Alolan, Galarian, Hisuian, Paldean, Mega, and Gigantamax forms. PokeAPI remains the primary lookup and the Cobblemon texture remains the final fallback.
+- Added the remaining Poke Snack count to Snack notifications, including an explicit message when the last Poke Snack is consumed.
+- Fixed the internal Discord title key appearing in ntfy messages when Discord is disabled.
+
 ## 1.7.0
 
 - Localize Cobblemon species and form names in Snack and inferred pasture egg notifications using the active game language.
