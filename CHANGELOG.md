@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.0
+
+- Localize Cobblemon species and form names in Snack and inferred pasture egg notifications using the active game language.
+- Show the inferred pasture egg Pokemon in the Discord Embed title.
+
 ## 1.6.3
 
 - Show the detected Pokemon (and form when available) in the Discord Snack Embed title.

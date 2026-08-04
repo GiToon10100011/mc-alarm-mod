@@ -104,6 +104,16 @@ public final class NotificationService {
                 : "🍪 " + pokemonName + " - Snack Consumed";
     }
 
+    /** Creates a localized pasture egg title while retaining the inferred Pokemon name. */
+    public static String pastureEggDiscordTitle(String pokemonName) {
+        if (pokemonName == null || pokemonName.isBlank()) {
+            return localizedMessageFor(EventType.PASTURE_EGG);
+        }
+        return usesKoreanLanguage()
+                ? "🥚 " + pokemonName + " 알 생성"
+                : "🥚 " + pokemonName + " Egg Created";
+    }
+
     private void sendDiscord(EventType eventType, String message, Map<String, Object> metadata) {
         try {
             URI webhookUri = validHttpUri(config.discordWebhook.trim());

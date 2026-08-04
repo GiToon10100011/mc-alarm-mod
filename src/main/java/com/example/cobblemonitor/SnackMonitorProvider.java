@@ -194,12 +194,12 @@ public final class SnackMonitorProvider {
 
     private static void addPokemonMetadata(Map<String, Object> fields, PokemonEntity entity) {
         Pokemon pokemon = entity.getPokemon();
-        fields.put("Species", pokemon.getSpecies().getName());
+        fields.put("Species", CobblemonText.speciesName(pokemon.getSpecies()));
         String formName = pokemon.getForm().getName();
         List<String> formAspects = pokemon.getForm().getAspects();
         if (!formAspects.isEmpty() && formName != null && !formName.isBlank()
                 && !"base".equalsIgnoreCase(formName)) {
-            fields.put("Form", formName);
+            fields.put("Form", CobblemonText.formName(pokemon.getSpecies(), pokemon.getForm()));
         }
         fields.put("Level", pokemon.getLevel());
         fields.put("Shiny", pokemon.getShiny());
@@ -218,12 +218,7 @@ public final class SnackMonitorProvider {
     }
 
     private static String pokemonDisplayName(Pokemon pokemon) {
-        String formName = pokemon.getForm().getName();
-        if (!pokemon.getForm().getAspects().isEmpty() && formName != null && !formName.isBlank()
-                && !"base".equalsIgnoreCase(formName)) {
-            return pokemon.getSpecies().getName() + " (" + formName + ")";
-        }
-        return pokemon.getSpecies().getName();
+        return CobblemonText.displayName(pokemon.getSpecies(), pokemon.getForm());
     }
 
     private static final class PendingSnack {

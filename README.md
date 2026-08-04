@@ -40,8 +40,8 @@ below.
 
 1. Install Fabric Loader and Fabric API.
 2. Install Cobblemon, and Cobbreeding if you use pasture egg monitoring.
-3. Put `cobble-monitor-1.6.3.jar` in the instance `mods` folder.
-4. Do **not** put `cobble-monitor-1.6.3-sources.jar` in `mods`.
+3. Put `cobble-monitor-1.7.0.jar` in the instance `mods` folder.
+4. Do **not** put `cobble-monitor-1.7.0-sources.jar` in `mods`.
 5. Start the game once. The config is created at
    `.minecraft/config/cobble-monitor.json`.
 
@@ -131,6 +131,8 @@ same-species GUI cache can produce a conservative inferred egg species and
 Discord sprite. The inferred form is retained when Cobbreeding returns it, so
 regional forms use their matching Cobblemon texture; other combinations display
 parents without guessing.
+Cobblemon species and form names follow the active Minecraft language in both
+fields and dynamic Discord titles.
 
 When no parent data is available yet, the egg alert still sends and includes a
 short reminder to open that pasture once for detailed parent and inferred-species

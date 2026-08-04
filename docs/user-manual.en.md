@@ -97,6 +97,8 @@ species or a same-species pair can then receive a conservative inferred species
 and sprite. When Cobbreeding returns a form, the alert also displays it and uses
 the matching Cobblemon texture; other combinations keep the parent names without
 guessing.
+Species and form names use the active Minecraft language in notification fields
+and dynamic Discord titles.
 
 An egg alert still sends when this parent data is unavailable, and its metadata
 reminds you to open the pasture once for detailed information. Monitoring uses a

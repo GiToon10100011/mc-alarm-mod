@@ -409,11 +409,21 @@ public final class PastureEggNotifier {
         if (parents.usable && parents.possibleEggSpecies.size() == 1) {
             String species = parents.possibleEggSpecies.iterator().next();
             LOGGER.info("Pasture egg species inferred from Cobbreeding parents at {}: {}", pos, species);
-            fields.put("Species", species + " (inferred from parents)");
             if (parents.inferredEggSpecies != null) {
-                addFormMetadata(fields, parents.inferredEggForm);
+                String localizedName = CobblemonText.speciesName(parents.inferredEggSpecies);
+                String localizedDisplayName = CobblemonText.displayName(
+                        parents.inferredEggSpecies,
+                        parents.inferredEggForm
+                );
+                fields.put("Species", localizedName + " (inferred from parents)");
+                fields.put(
+                        NotificationService.DISCORD_TITLE,
+                        NotificationService.pastureEggDiscordTitle(localizedDisplayName)
+                );
+                addFormMetadata(fields, parents.inferredEggSpecies, parents.inferredEggForm);
                 addPokemonThumbnail(fields, parents.inferredEggSpecies, parents.inferredEggForm);
             } else {
+                fields.put("Species", species + " (inferred from parents)");
                 addPokemonThumbnail(fields, species);
             }
             return;
@@ -470,10 +480,7 @@ public final class PastureEggNotifier {
 
     private static String formatSpeciesDisplay(Species species, Set<String> aspects) {
         FormData form = resolveForm(species, aspects);
-        if (form != null && !form.getAspects().isEmpty() && form.getName() != null && !form.getName().isBlank()) {
-            return species.getName() + " (" + form.getName() + ")";
-        }
-        return species.getName();
+        return CobblemonText.displayName(species, form);
     }
 
     private static boolean sameForm(List<ResolvedCachedParent> parents) {
@@ -483,9 +490,10 @@ public final class PastureEggNotifier {
                 .count() == 1;
     }
 
-    private static void addFormMetadata(Map<String, Object> fields, FormData form) {
-        if (form != null && !form.getAspects().isEmpty() && form.getName() != null && !form.getName().isBlank()) {
-            fields.put("Form", form.getName());
+    private static void addFormMetadata(Map<String, Object> fields, Species species, FormData form) {
+        String formName = CobblemonText.formName(species, form);
+        if (!formName.isBlank()) {
+            fields.put("Form", formName);
         }
     }
 
@@ -716,7 +724,7 @@ public final class PastureEggNotifier {
         private static InferredEggSpecies of(Species species, FormData form) {
             return species == null
                     ? unavailable()
-                    : new InferredEggSpecies(Set.of(species.getName()), species, form);
+                    : new InferredEggSpecies(Set.of(CobblemonText.speciesName(species)), species, form);
         }
     }
 
