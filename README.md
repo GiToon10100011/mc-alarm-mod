@@ -40,8 +40,8 @@ below.
 
 1. Install Fabric Loader and Fabric API.
 2. Install Cobblemon, and Cobbreeding if you use pasture egg monitoring.
-3. Put `cobble-monitor-1.5.3.jar` in the instance `mods` folder.
-4. Do **not** put `cobble-monitor-1.5.3-sources.jar` in `mods`.
+3. Put `cobble-monitor-1.5.4.jar` in the instance `mods` folder.
+4. Do **not** put `cobble-monitor-1.5.4-sources.jar` in `mods`.
 5. Start the game once. The config is created at
    `.minecraft/config/cobble-monitor.json`.
 

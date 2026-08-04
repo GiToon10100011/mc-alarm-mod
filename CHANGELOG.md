@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4
+
+- Fixed Discord egg thumbnails by carrying the exact inferred Cobblemon Species through to PokeAPI sprite URL generation.
+
 ## 1.5.3
 
 - Retain OpenPasturePacket species identifiers so Ditto and same-species parent pairs reliably infer an egg species and Discord sprite.

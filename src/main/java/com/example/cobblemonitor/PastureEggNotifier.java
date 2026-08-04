@@ -227,7 +227,15 @@ public final class PastureEggNotifier {
             }
 
             Set<String> possibleSpecies = readPossibleEggSpecies(parents);
-            return new ParentMetadata(parentSpecies, possibleSpecies, tetheredEntryCount, parents.size(), true, "BlockEntity");
+            return new ParentMetadata(
+                    parentSpecies,
+                    possibleSpecies,
+                    tetheredEntryCount,
+                    parents.size(),
+                    true,
+                    "BlockEntity",
+                    null
+            );
         } catch (ReflectiveOperationException | RuntimeException exception) {
             LOGGER.debug("Could not infer pasture egg species from tethered Pokemon", exception);
             return fromGuiParentCache(cachedParents, tetheredEntryCount);
@@ -244,17 +252,19 @@ public final class PastureEggNotifier {
             int tetheredEntryCount
     ) {
         if (cachedParents == null || cachedParents.isEmpty()) {
-            return new ParentMetadata(Set.of(), Set.of(), tetheredEntryCount, 0, false, "unavailable");
+            return new ParentMetadata(Set.of(), Set.of(), tetheredEntryCount, 0, false, "unavailable", null);
         }
+        InferredEggSpecies inferred = inferEggSpeciesFromGuiParents(cachedParents);
         return new ParentMetadata(
                 cachedParents.stream()
                         .map(CachedParentSpecies::displayName)
                         .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)),
-                inferEggSpeciesFromGuiParents(cachedParents),
+                inferred.names,
                 tetheredEntryCount,
                 cachedParents.size(),
                 true,
-                "OpenPasturePacket cache"
+                "OpenPasturePacket cache",
+                inferred.species
         );
     }
 
@@ -263,11 +273,11 @@ public final class PastureEggNotifier {
      * one non-Ditto species paired with Ditto, or a same-species pair. The egg's
      * existence is already confirmed by HAS_EGG before this metadata is used.
      */
-    private static Set<String> inferEggSpeciesFromGuiParents(List<CachedParentSpecies> parentNames) {
+    private static InferredEggSpecies inferEggSpeciesFromGuiParents(List<CachedParentSpecies> parentNames) {
         // A full pasture may contain more residents than the actual breeding pair.
         // Do not guess an egg species unless the GUI reports exactly the two parents.
         if (parentNames.size() != 2) {
-            return Set.of();
+            return InferredEggSpecies.unavailable();
         }
         Set<Species> parentSpecies = new LinkedHashSet<>();
         Set<Species> nonDitto = new LinkedHashSet<>();
@@ -275,7 +285,7 @@ public final class PastureEggNotifier {
         for (CachedParentSpecies parent : parentNames) {
             Species species = PokemonSpecies.getByIdentifier(parent.speciesId());
             if (species == null) {
-                return Set.of();
+                return InferredEggSpecies.unavailable();
             }
             parentSpecies.add(species);
             if ("ditto".equals(species.getResourceIdentifier().getPath())) {
@@ -286,23 +296,23 @@ public final class PastureEggNotifier {
         }
         boolean sameSpeciesPair = parentSpecies.size() == 1 && !hasDitto;
         if (nonDitto.isEmpty() && hasDitto && parentSpecies.size() == 1) {
-            return Set.of(parentNames.getFirst().displayName());
+            return InferredEggSpecies.of(parentSpecies.iterator().next());
         }
         if (nonDitto.size() != 1 || (!hasDitto && !sameSpeciesPair)) {
-            return Set.of();
+            return InferredEggSpecies.unavailable();
         }
         Species breedingSpecies = nonDitto.iterator().next();
         try {
             FormData baby = BreedingUtilities.INSTANCE.getBaby(breedingSpecies.getStandardForm());
             if (baby != null && baby.getSpecies() != null) {
-                return Set.of(baby.getSpecies().getName());
+                return InferredEggSpecies.of(baby.getSpecies());
             }
         } catch (RuntimeException exception) {
             LOGGER.debug("Could not resolve the baby species for cached pasture parents", exception);
         }
         // The server confirmed HAS_EGG. Preserve a useful, deterministic result
         // even if Cobbreeding's baby lookup cannot resolve a special form.
-        return Set.of(breedingSpecies.getName());
+        return InferredEggSpecies.of(breedingSpecies);
     }
 
     /**
@@ -333,7 +343,11 @@ public final class PastureEggNotifier {
             String species = parents.possibleEggSpecies.iterator().next();
             LOGGER.info("Pasture egg species inferred from Cobbreeding parents at {}: {}", pos, species);
             fields.put("Species", species + " (inferred from parents)");
-            addPokemonThumbnail(fields, species);
+            if (parents.inferredEggSpecies != null) {
+                addPokemonThumbnail(fields, parents.inferredEggSpecies);
+            } else {
+                addPokemonThumbnail(fields, species);
+            }
             return;
         }
         if (parents.usable && !parents.possibleEggSpecies.isEmpty()) {
@@ -351,14 +365,19 @@ public final class PastureEggNotifier {
     private static void addPokemonThumbnail(Map<String, Object> fields, String speciesName) {
         try {
             Species species = PokemonSpecies.getByName(speciesName);
-            if (species != null) {
-                fields.put(
-                        NotificationService.DISCORD_THUMBNAIL_URL,
-                        NotificationService.pokemonSpriteUrl(species.getNationalPokedexNumber(), false)
-                );
-            }
+            addPokemonThumbnail(fields, species);
         } catch (RuntimeException exception) {
             LOGGER.debug("Could not resolve a PokeAPI sprite for egg species {}", speciesName, exception);
+        }
+    }
+
+    /** Adds a PokeAPI thumbnail from the exact Cobblemon species instance. */
+    private static void addPokemonThumbnail(Map<String, Object> fields, Species species) {
+        if (species != null) {
+            fields.put(
+                    NotificationService.DISCORD_THUMBNAIL_URL,
+                    NotificationService.pokemonSpriteUrl(species.getNationalPokedexNumber(), false)
+            );
         }
     }
 
@@ -561,14 +580,28 @@ public final class PastureEggNotifier {
             int tetheredEntryCount,
             int resolvedPokemonCount,
             boolean usable,
-            String source
+            String source,
+            Species inferredEggSpecies
     ) {
         private static ParentMetadata unavailable() {
-            return new ParentMetadata(Set.of(), Set.of(), 0, 0, false, "unavailable");
+            return new ParentMetadata(Set.of(), Set.of(), 0, 0, false, "unavailable", null);
         }
     }
 
     /** Preserves the exact server-provided identifier alongside its display name. */
     private record CachedParentSpecies(Identifier speciesId, String displayName) {
+    }
+
+    /** Couples the display name with the exact species required for its sprite. */
+    private record InferredEggSpecies(Set<String> names, Species species) {
+        private static InferredEggSpecies unavailable() {
+            return new InferredEggSpecies(Set.of(), null);
+        }
+
+        private static InferredEggSpecies of(Species species) {
+            return species == null
+                    ? unavailable()
+                    : new InferredEggSpecies(Set.of(species.getName()), species);
+        }
     }
 }
