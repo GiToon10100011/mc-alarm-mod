@@ -205,7 +205,7 @@ public final class NotificationService {
             URI topicUri = validHttpUri("https://ntfy.sh/" + config.ntfyTopic.trim());
             StringBuilder message = new StringBuilder(title);
             for (Map.Entry<String, Object> entry : metadata.entrySet()) {
-                if (DISCORD_THUMBNAIL_URL.equals(entry.getKey())) {
+                if (DISCORD_THUMBNAIL_URL.equals(entry.getKey()) || DISCORD_TITLE.equals(entry.getKey())) {
                     continue;
                 }
                 if (entry.getValue() != null && !String.valueOf(entry.getValue()).isBlank()) {
