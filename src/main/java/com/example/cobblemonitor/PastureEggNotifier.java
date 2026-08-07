@@ -27,6 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -62,13 +63,37 @@ public final class PastureEggNotifier {
 
     public void resetWorldState() {
         observedStates.clear();
-        guiCachedParents.clear();
         pendingGuiPastureKey = null;
         activeGuiPastureKey = null;
         pendingGuiPastureExpiresAt = 0L;
         lastOpenPasturePacket = "none";
         lastOpenPastureCacheStatus = "none";
         lastPastureCacheUpdate = "none";
+        // Parents are restored rather than dropped: a pasture the player never
+        // reopens would otherwise lose its egg species on every world change.
+        reloadPersistedParents();
+    }
+
+    /** Rebuilds the in-memory parent cache from the persisted configuration. */
+    public void reloadPersistedParents() {
+        guiCachedParents.clear();
+        int restored = 0;
+        for (ConfigManager.MonitoredPasture target : configManager.getConfig().monitoredPastures) {
+            List<CachedParentSpecies> parents = new ArrayList<>();
+            for (ConfigManager.CachedParent stored : target.cachedParents) {
+                CachedParentSpecies parent = fromStoredParent(stored);
+                if (parent != null) {
+                    parents.add(parent);
+                }
+            }
+            if (!parents.isEmpty()) {
+                guiCachedParents.put(configPastureKey(target), parents);
+                restored++;
+            }
+        }
+        if (restored > 0) {
+            LOGGER.info("Restored persisted pasture parents for {} pasture(s)", restored);
+        }
     }
 
     /** Arms a one-shot association before Cobblemon opens a pasture GUI. */
@@ -106,6 +131,7 @@ public final class PastureEggNotifier {
             return;
         }
         guiCachedParents.put(pendingGuiPastureKey, parents);
+        persistParents(pendingGuiPastureKey, parents);
         activeGuiPastureKey = pendingGuiPastureKey;
         LOGGER.info("Cached {} pasture parent species from OpenPasturePacket", species.size());
         lastOpenPastureCacheStatus = "cached for " + pendingGuiPastureKey;
@@ -120,9 +146,10 @@ public final class PastureEggNotifier {
             return;
         }
         List<CachedParentSpecies> cached = new ArrayList<>(guiCachedParents.getOrDefault(activeGuiPastureKey, List.of()));
-        cached.removeIf(parent -> parent.pokemonId().equals(data.getPokemonId()));
+        cached.removeIf(parent -> Objects.equals(parent.pokemonId(), data.getPokemonId()));
         cached.add(toCachedParent(data));
         guiCachedParents.put(activeGuiPastureKey, cached);
+        persistParents(activeGuiPastureKey, cached);
         lastPastureCacheUpdate = "PokemonPasturedPacket cached for " + activeGuiPastureKey;
         LOGGER.info("Pasture cache updated using PokemonPasturedPacket");
     }
@@ -134,8 +161,9 @@ public final class PastureEggNotifier {
             return;
         }
         List<CachedParentSpecies> cached = new ArrayList<>(guiCachedParents.getOrDefault(activeGuiPastureKey, List.of()));
-        cached.removeIf(parent -> parent.pokemonId().equals(pokemonId));
+        cached.removeIf(parent -> Objects.equals(parent.pokemonId(), pokemonId));
         guiCachedParents.put(activeGuiPastureKey, cached);
+        persistParents(activeGuiPastureKey, cached);
         lastPastureCacheUpdate = "PokemonUnpasturedPacket cached for " + activeGuiPastureKey;
         LOGGER.info("Pasture cache updated using PokemonUnpasturedPacket");
     }
@@ -143,6 +171,62 @@ public final class PastureEggNotifier {
     /** Prevents later pasture packets from being associated after the GUI closes. */
     public void closePastureGui() {
         activeGuiPastureKey = null;
+    }
+
+    /**
+     * Writes the cache through to disk. A miss is normal and harmless: only a
+     * registered pasture can be cached, but its stored position is matched exactly,
+     * so a legacy entry recorded on the pasture's top half stays session-only.
+     */
+    private void persistParents(String key, List<CachedParentSpecies> parents) {
+        for (ConfigManager.MonitoredPasture target : configManager.getConfig().monitoredPastures) {
+            if (!configPastureKey(target).equals(key)) {
+                continue;
+            }
+            List<ConfigManager.CachedParent> stored = new ArrayList<>();
+            for (CachedParentSpecies parent : parents) {
+                stored.add(new ConfigManager.CachedParent(
+                        parent.pokemonId() == null ? "" : parent.pokemonId().toString(),
+                        parent.speciesId().toString(),
+                        new ArrayList<>(parent.aspects())
+                ));
+            }
+            target.cachedParents = stored;
+            configManager.save();
+            LOGGER.info("Persisted {} pasture parent(s) for {}", stored.size(), key);
+            return;
+        }
+    }
+
+    /** Resolves a stored parent, translating its name through the current language. */
+    private static CachedParentSpecies fromStoredParent(ConfigManager.CachedParent stored) {
+        Identifier speciesId = Identifier.tryParse(stored.species);
+        if (speciesId == null) {
+            LOGGER.debug("Ignoring a persisted pasture parent with an unreadable species id");
+            return null;
+        }
+        Set<String> aspects = Set.copyOf(stored.aspects);
+        Species resolved = PokemonSpecies.getByIdentifier(speciesId);
+        String displayName = resolved == null
+                ? speciesId.getPath()
+                : formatSpeciesDisplay(resolved, aspects);
+        return new CachedParentSpecies(parseUuid(stored.pokemonId), speciesId, aspects, displayName);
+    }
+
+    private static UUID parseUuid(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    /** Uses the registered position, which the add command already stores as the base. */
+    private static String configPastureKey(ConfigManager.MonitoredPasture target) {
+        return pastureKey(target.dimension, new BlockPos(target.x, target.y, target.z));
     }
 
     private static CachedParentSpecies toCachedParent(OpenPasturePacket.PasturePokemonDataDTO data) {
@@ -663,7 +747,8 @@ public final class PastureEggNotifier {
             lines.add("Possible egg species=" + (metadata.parents.possibleEggSpecies.isEmpty()
                     ? "unavailable"
                     : String.join(", ", metadata.parents.possibleEggSpecies)));
-            lines.add("Parent source=" + metadata.parents.source);
+            lines.add("Parent source=" + metadata.parents.source
+                    + ", persisted parents=" + target.cachedParents.size());
         }
         // Explicitly marked as a raw packet echo: it reports what the last GUI open
         // contained, not the current cache, and the two differ whenever the pasture

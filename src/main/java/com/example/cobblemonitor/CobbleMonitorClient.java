@@ -169,6 +169,7 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         notificationService = new NotificationService(config);
         if (pastureEggNotifier != null) {
             pastureEggNotifier.setNotificationService(notificationService);
+            pastureEggNotifier.reloadPersistedParents();
         }
         if (snackMonitorProvider != null) {
             snackMonitorProvider.setNotificationService(notificationService);

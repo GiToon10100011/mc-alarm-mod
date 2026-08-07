@@ -156,6 +156,7 @@ public final class ConfigManager {
             if (monitoredPastures == null) monitoredPastures = new ArrayList<>();
             if (playerNameCache == null) playerNameCache = new LinkedHashMap<>();
             monitoredPastures.removeIf(pasture -> pasture == null || !pasture.isValid());
+            monitoredPastures.forEach(MonitoredPasture::normalize);
             playerNameCache.entrySet().removeIf(entry -> entry.getKey() == null || entry.getKey().isBlank()
                     || entry.getValue() == null || entry.getValue().isBlank());
             while (playerNameCache.size() > MAX_CACHED_PLAYER_NAMES) {
@@ -191,6 +192,13 @@ public final class ConfigManager {
         public int z;
         public String registeredByUuid = "";
         public String registeredByName = "";
+        /**
+         * Parents captured the last time this pasture's GUI was opened. Cobblemon
+         * never sends pasture contents to a client outside that packet, so this is
+         * persisted to keep egg species available for a pasture the player rarely
+         * opens, such as one emptied by a hopper.
+         */
+        public List<CachedParent> cachedParents = new ArrayList<>();
 
         public MonitoredPasture() {
         }
@@ -210,6 +218,50 @@ public final class ConfigManager {
 
         public boolean sameLocation(String otherDimension, int otherX, int otherY, int otherZ) {
             return dimension.equals(otherDimension) && x == otherX && y == otherY && z == otherZ;
+        }
+
+        private void normalize() {
+            if (cachedParents == null) {
+                cachedParents = new ArrayList<>();
+            }
+            cachedParents.removeIf(parent -> parent == null || !parent.isValid());
+            for (CachedParent parent : cachedParents) {
+                parent.normalize();
+            }
+        }
+    }
+
+    /**
+     * One pasture parent as Cobblemon's GUI packet described it. The display name is
+     * deliberately not stored: it is resolved again on load so a game-language change
+     * is reflected without invalidating the cache.
+     */
+    public static final class CachedParent {
+        public String pokemonId = "";
+        public String species = "";
+        public List<String> aspects = new ArrayList<>();
+
+        public CachedParent() {
+        }
+
+        public CachedParent(String pokemonId, String species, List<String> aspects) {
+            this.pokemonId = pokemonId;
+            this.species = species;
+            this.aspects = aspects;
+        }
+
+        public boolean isValid() {
+            return species != null && !species.isBlank();
+        }
+
+        private void normalize() {
+            if (pokemonId == null) {
+                pokemonId = "";
+            }
+            if (aspects == null) {
+                aspects = new ArrayList<>();
+            }
+            aspects.removeIf(aspect -> aspect == null || aspect.isBlank());
         }
     }
 
