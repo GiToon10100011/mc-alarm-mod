@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.2
+
+- Pasture parents captured from the Cobblemon GUI are now stored in the config instead of only in memory, so they survive a relog or world change. A pasture you rarely open - one emptied by a hopper, for example - keeps reporting its inferred egg species instead of falling back to "unavailable" every session.
+- Fixed a monitored pasture keeping its pending GUI association after its own GUI failed to open, which could cache another pasture's parents under the monitored pasture's coordinates.
+- Corrected pasture diagnostics that described the code inaccurately: "pasture inventory not synchronized" implied a timing problem where a client is never sent pasture contents at all, and "Egg inventory usable" reported a flag that was true whenever no egg was expected. Parents restored from the config are now reported as such rather than as a packet received this session.
+- Added a session counter for pasture GUI updates dropped with no associated GUI, and grouped the session-wide status lines in `debug pasture` under their own heading so they are no longer read as describing the last pasture listed.
+
 ## 1.8.1
 
 - Fixed pasture parents sharing a species and form being reported as one parent. A pasture holding two Hisuian Zorua now shows both in the Discord egg embed and in diagnostics.

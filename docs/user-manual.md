@@ -19,7 +19,7 @@ Cobble Monitor는 Fabric 1.21.1 클라이언트 전용 모드입니다.
 ## 2. 설치
 
 1. Fabric Loader 0.16.5 이상과 Fabric API를 설치한다.
-2. `cobble-monitor-1.8.1.jar`를 클라이언트의 `mods` 폴더에 넣는다.
+2. `cobble-monitor-1.8.2.jar`를 클라이언트의 `mods` 폴더에 넣는다.
 3. 기존 `nightnotifier` JAR이 있으면 중복 실행을 막기 위해 제거한다.
 4. Cobblemon 기능을 사용할 경우 Cobblemon 1.7.3을 설치한다.
 5. 목장 알을 감시할 경우 Cobbreeding 2.2.2도 설치한다.
@@ -255,6 +255,11 @@ HAS_EGG: false -> true
 
 `HAS_EGG`는 Boolean이므로 이미 `true`인 상태에서 두 번째 알이 추가되는 변화와
 현재 알의 정확한 개수는 순수 클라이언트에서 항상 확인할 수 없다.
+
+부모 종족은 목장 GUI를 한 번 열었을 때 받은 패킷에서 캐시한다. 이 캐시는 설정
+파일에 저장되므로 재접속이나 월드 변경 후에도 유지된다. 따라서 각 목장을 한 번씩만
+열어두면 되며, 호퍼로 자동 회수하여 평소에 열지 않는 목장도 알 종족을 계속
+추정할 수 있다.
 
 ### Snack 소비
 
