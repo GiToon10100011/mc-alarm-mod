@@ -45,6 +45,17 @@ public final class PastureEggNotifier {
     private NotificationService notificationService;
     private final Map<String, Boolean> observedStates = new java.util.HashMap<>();
     private final Map<String, List<CachedParentSpecies>> guiCachedParents = new java.util.HashMap<>();
+    /**
+     * Keys whose parents came from a packet in this session rather than from the
+     * config, so the debug report can tell a live capture from a restored one.
+     */
+    private final Set<String> parentsCachedThisSession = new java.util.HashSet<>();
+    /**
+     * Counts pasture packets dropped because no GUI was associated. The ignore path
+     * is otherwise silent, which made it impossible to tell from a log whether the
+     * condition ever actually fires.
+     */
+    private int ignoredPastureUpdates;
     private String pendingGuiPastureKey;
     private String activeGuiPastureKey;
     private long pendingGuiPastureExpiresAt;
@@ -63,6 +74,7 @@ public final class PastureEggNotifier {
 
     public void resetWorldState() {
         observedStates.clear();
+        ignoredPastureUpdates = 0;
         pendingGuiPastureKey = null;
         activeGuiPastureKey = null;
         pendingGuiPastureExpiresAt = 0L;
@@ -77,6 +89,7 @@ public final class PastureEggNotifier {
     /** Rebuilds the in-memory parent cache from the persisted configuration. */
     public void reloadPersistedParents() {
         guiCachedParents.clear();
+        parentsCachedThisSession.clear();
         int restored = 0;
         for (ConfigManager.MonitoredPasture target : configManager.getConfig().monitoredPastures) {
             List<CachedParentSpecies> parents = new ArrayList<>();
@@ -131,6 +144,7 @@ public final class PastureEggNotifier {
             return;
         }
         guiCachedParents.put(pendingGuiPastureKey, parents);
+        parentsCachedThisSession.add(pendingGuiPastureKey);
         persistParents(pendingGuiPastureKey, parents);
         activeGuiPastureKey = pendingGuiPastureKey;
         LOGGER.info("Cached {} pasture parent species from OpenPasturePacket", species.size());
@@ -142,6 +156,7 @@ public final class PastureEggNotifier {
     /** Updates the active monitored pasture cache when Cobblemon adds a Pokemon in its GUI. */
     public void cachePasturedPokemon(OpenPasturePacket.PasturePokemonDataDTO data) {
         if (activeGuiPastureKey == null) {
+            ignoredPastureUpdates++;
             lastPastureCacheUpdate = "ignored PokemonPasturedPacket: no active monitored pasture GUI";
             return;
         }
@@ -149,6 +164,7 @@ public final class PastureEggNotifier {
         cached.removeIf(parent -> Objects.equals(parent.pokemonId(), data.getPokemonId()));
         cached.add(toCachedParent(data));
         guiCachedParents.put(activeGuiPastureKey, cached);
+        parentsCachedThisSession.add(activeGuiPastureKey);
         persistParents(activeGuiPastureKey, cached);
         lastPastureCacheUpdate = "PokemonPasturedPacket cached for " + activeGuiPastureKey;
         LOGGER.info("Pasture cache updated using PokemonPasturedPacket");
@@ -157,12 +173,14 @@ public final class PastureEggNotifier {
     /** Updates the active monitored pasture cache when Cobblemon removes a Pokemon in its GUI. */
     public void cacheUnpasturedPokemon(UUID pokemonId) {
         if (activeGuiPastureKey == null) {
+            ignoredPastureUpdates++;
             lastPastureCacheUpdate = "ignored PokemonUnpasturedPacket: no active monitored pasture GUI";
             return;
         }
         List<CachedParentSpecies> cached = new ArrayList<>(guiCachedParents.getOrDefault(activeGuiPastureKey, List.of()));
         cached.removeIf(parent -> Objects.equals(parent.pokemonId(), pokemonId));
         guiCachedParents.put(activeGuiPastureKey, cached);
+        parentsCachedThisSession.add(activeGuiPastureKey);
         persistParents(activeGuiPastureKey, cached);
         lastPastureCacheUpdate = "PokemonUnpasturedPacket cached for " + activeGuiPastureKey;
         LOGGER.info("Pasture cache updated using PokemonUnpasturedPacket");
@@ -329,7 +347,9 @@ public final class PastureEggNotifier {
         }
         boolean inventoryContentsSynced = !eggExpected || eggCount > 0;
         if (eggExpected && !inventoryContentsSynced) {
-            LOGGER.debug("Pasture at {} has HAS_EGG=true but no egg ItemStacks were synchronized to the client", pos);
+            LOGGER.debug("Pasture at {} has HAS_EGG=true but holds no client-visible egg ItemStacks."
+                    + " Cobblemon never sends pasture contents to a client, so this is the normal case,"
+                    + " not a synchronization delay", pos);
         }
         return new EggMetadata(species, eggCount, inventoryContentsSynced, parents);
     }
@@ -339,16 +359,20 @@ public final class PastureEggNotifier {
      * gender, form, and egg-group rules in this client mod.
      */
     private ParentMetadata readPastureParents(ClientWorld world, BlockPos pos, BlockEntity blockEntity) {
-        List<CachedParentSpecies> cachedParents = guiCachedParents.get(
-                pastureKey(world.getRegistryKey().getValue().toString(), pos)
-        );
+        String key = pastureKey(world.getRegistryKey().getValue().toString(), pos);
+        List<CachedParentSpecies> cachedParents = guiCachedParents.get(key);
+        // Restored entries are as usable as freshly captured ones, but reporting both
+        // as "OpenPasturePacket cache" would claim a packet arrived this session.
+        String cacheSource = parentsCachedThisSession.contains(key)
+                ? "OpenPasturePacket cache"
+                : "persisted cache (restored from config)";
         if (!(blockEntity instanceof PokemonPastureBlockEntity pasture)) {
-            return fromGuiParentCache(cachedParents);
+            return fromGuiParentCache(cachedParents, cacheSource);
         }
 
         int tetheredEntryCount = pasture.getTetheredPokemon().size();
         if (tetheredEntryCount == 0) {
-            return fromGuiParentCache(cachedParents);
+            return fromGuiParentCache(cachedParents, tetheredEntryCount, cacheSource);
         }
         try {
             List<Pokemon> parents = BreedingUtilities.getPokemon(pasture.getTetheredPokemon());
@@ -370,18 +394,22 @@ public final class PastureEggNotifier {
             );
         } catch (ReflectiveOperationException | RuntimeException exception) {
             LOGGER.debug("Could not infer pasture egg species from tethered Pokemon", exception);
-            return fromGuiParentCache(cachedParents, tetheredEntryCount);
+            return fromGuiParentCache(cachedParents, tetheredEntryCount, cacheSource);
         }
     }
 
     /** Uses GUI-cached species only when the current BlockEntity has no parent data. */
-    private static ParentMetadata fromGuiParentCache(List<CachedParentSpecies> cachedParents) {
-        return fromGuiParentCache(cachedParents, 0);
+    private static ParentMetadata fromGuiParentCache(
+            List<CachedParentSpecies> cachedParents,
+            String cacheSource
+    ) {
+        return fromGuiParentCache(cachedParents, 0, cacheSource);
     }
 
     private static ParentMetadata fromGuiParentCache(
             List<CachedParentSpecies> cachedParents,
-            int tetheredEntryCount
+            int tetheredEntryCount,
+            String cacheSource
     ) {
         if (cachedParents == null || cachedParents.isEmpty()) {
             return new ParentMetadata(List.of(), Set.of(), tetheredEntryCount, 0, false, "unavailable", null, null);
@@ -395,7 +423,7 @@ public final class PastureEggNotifier {
                 tetheredEntryCount,
                 cachedParents.size(),
                 true,
-                "OpenPasturePacket cache",
+                cacheSource,
                 inferred.species,
                 inferred.form
         );
@@ -517,9 +545,11 @@ public final class PastureEggNotifier {
             return;
         }
 
+        // Not a timing problem: a client is never sent pasture contents at all, so the
+        // old "not synchronized" wording sent readers looking for a race that cannot exist.
         String reason = metadata.inventorySynced
                 ? "egg metadata unavailable"
-                : "pasture inventory not synchronized";
+                : "pasture contents are not sent to clients";
         LOGGER.warn("Pasture egg detected at {}, but species is unavailable: {}", pos, reason);
         fields.put("Species", "Unavailable (" + reason + ")");
     }
@@ -674,8 +704,8 @@ public final class PastureEggNotifier {
                 + ", has_egg=" + hasEgg);
         BlockEntity blockEntity = world.getBlockEntity(base);
         lines.add("BlockEntity: " + (blockEntity == null ? "none" : blockEntity.getClass().getSimpleName()));
-        lines.add("Inventory synced=" + metadata.inventorySynced
-                + ", eggCount=" + metadata.eggCount
+        lines.add("Local egg stacks=" + metadata.eggCount
+                + " (0 is expected: pasture contents are never sent to clients)"
                 + ", species=" + (metadata.species.isEmpty() ? "unavailable" : String.join(", ", metadata.species)));
         lines.add("Pasture parents (cached, " + metadata.parents.species.size() + ")="
                 + (metadata.parents.species.isEmpty()
@@ -735,8 +765,8 @@ public final class PastureEggNotifier {
             lines.add("HAS_EGG=" + hasEgg + ", observed=" + observedStates.get(key));
             BlockEntity blockEntity = world.getBlockEntity(base);
             lines.add("BlockEntity: " + (blockEntity == null ? "none" : blockEntity.getClass().getSimpleName()));
-            lines.add("Egg inventory usable=" + metadata.inventorySynced
-                    + ", local egg stacks=" + metadata.eggCount);
+            lines.add("Local egg stacks=" + metadata.eggCount
+                    + " (0 is expected: pasture contents are never sent to clients)");
             lines.add("Tethered entries=" + metadata.parents.tetheredEntryCount
                     + ", resolved Pokemon=" + metadata.parents.resolvedPokemonCount
                     + ", parent data usable=" + metadata.parents.usable);
@@ -750,12 +780,13 @@ public final class PastureEggNotifier {
             lines.add("Parent source=" + metadata.parents.source
                     + ", persisted parents=" + target.cachedParents.size());
         }
-        // Explicitly marked as a raw packet echo: it reports what the last GUI open
-        // contained, not the current cache, and the two differ whenever the pasture
-        // changed after that packet.
+        // These four are single session-wide values, not per-pasture. Printed after the
+        // per-target block they used to read as if they described the last target listed.
+        lines.add("--- session-wide, not per-pasture ---");
         lines.add("Last OpenPasturePacket (raw packet, NOT the cache): " + lastOpenPasturePacket);
-        lines.add("OpenPasture cache: " + lastOpenPastureCacheStatus);
-        lines.add("Last pasture cache update: " + lastPastureCacheUpdate);
+        lines.add("Last OpenPasture cache result: " + lastOpenPastureCacheStatus);
+        lines.add("Last incremental cache update: " + lastPastureCacheUpdate);
+        lines.add("Updates dropped this session (no associated GUI): " + ignoredPastureUpdates);
         return lines;
     }
 
