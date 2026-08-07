@@ -112,6 +112,11 @@ public final class PastureEggNotifier {
     /** Arms a one-shot association before Cobblemon opens a pasture GUI. */
     public void markPastureInteraction(ClientWorld world, BlockPos interactedPos) {
         activeGuiPastureKey = null;
+        // A new interaction always invalidates a pending one. Without this, a monitored
+        // pasture whose GUI never opened kept its claim for the full timeout and the
+        // next pasture opened within it was cached under the wrong key.
+        pendingGuiPastureKey = null;
+        pendingGuiPastureExpiresAt = 0L;
         BlockPos base = resolvePastureBase(world, interactedPos);
         if (base == null) {
             return;
