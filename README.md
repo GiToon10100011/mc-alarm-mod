@@ -27,6 +27,8 @@ below.
 - Pokemon pixel-sprite thumbnails in Discord embeds, including shiny Snack targets
 - Regional and alternate form sprites (Alolan, Galarian, Hisuian, Paldean, Mega,
   Gigantamax) resolved through Pokemon Showdown when PokeAPI cannot address the form
+- Shiny and high-IV Cobbreeding eggs outlined in any container screen, with a total
+  for the whole container including slots scrolled out of view
 - Remaining Poke Snack count in Snack alerts
 - Offline snack placer names cached locally after the client has seen them
 - In-game configuration, help, diagnostics, and manual notification tests
@@ -158,6 +160,38 @@ in the same client world, but this is not a replacement for continuous remote
 monitoring. Disconnecting or changing client worlds resets the baseline to
 avoid duplicate alerts. Distance-independent alerts require the optional future
 server companion described in the roadmap.
+
+## Egg highlighting
+
+Open any container and Cobbreeding eggs worth keeping are outlined in place: gold
+for a shiny, green for an average IV at or above `eggHighlight.minAverageIv`
+(default 25). No command, no registration, and no per-container setup — the
+outlines are drawn on the container screen itself, so a vanilla chest,
+a Sophisticated Storage chest, a shulker box, and your own inventory all behave
+the same.
+
+A line above the screen totals the whole container:
+
+```text
+★ 1   ◆ 3   ↕ 2
+```
+
+`★` counts shiny eggs, `◆` counts high-IV eggs, and `↕` counts how many of those
+are currently scrolled out of view. The totals cover every slot, so a 108-slot
+Sophisticated chest does not have to be scrolled through to know what is in it.
+Your own inventory slots are excluded from the totals.
+
+Because outlines are drawn from each slot's live position, they stay correct while
+scrolling, after sorting, and after you move an egg by hand. This reads the egg's
+own `cobbreeding:pokemon_properties` component, which travels with the item stack,
+so it needs no server-side installation. A server that enables Cobbreeding's
+`eggEncryptionEnabled` replaces that component with ciphertext keyed by a
+server-only file; eggs are then simply never outlined.
+
+Like everything else client-side, this works only while the container's screen is
+open — a client is never sent container contents otherwise.
+
+Set `eggHighlight.enabled` to `false` to turn it off.
 
 ## Poke Snack monitoring
 

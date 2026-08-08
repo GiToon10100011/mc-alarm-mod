@@ -177,6 +177,28 @@ public final class CobbleMonitorClient implements ClientModInitializer {
         LOGGER.info("Configuration reloaded");
     }
 
+    /**
+     * Outlines notable eggs in an open container screen. Unlike the other bridges this
+     * one targets a vanilla screen, so it runs whether or not Cobblemon is installed;
+     * without Cobbreeding no stack carries the egg component and nothing is drawn.
+     */
+    public static void renderEggHighlights(
+            net.minecraft.client.gui.screen.ingame.HandledScreen<?> screen,
+            net.minecraft.client.gui.DrawContext context,
+            int originX,
+            int originY,
+            int backgroundWidth,
+            int backgroundHeight
+    ) {
+        if (activeInstance == null || activeInstance.config == null) {
+            return;
+        }
+        EggHighlightRenderer.render(
+                screen, context, originX, originY, backgroundWidth, backgroundHeight,
+                activeInstance.config.eggHighlight
+        );
+    }
+
     /** Receives an optional Cobblemon packet from the integration mixin. */
     public static void handleSnackPacket(Object packet) {
         if (snackMonitorProvider != null) {

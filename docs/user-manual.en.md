@@ -116,6 +116,42 @@ the egg inventory; exact counts are reserved for the future server companion.
 The registered-target output also reports the latest `OpenPasturePacket` DTO
 species and whether it was cached for a monitored pasture.
 
+## Egg highlighting
+
+Open any container and Cobbreeding eggs worth keeping are outlined where they sit:
+gold for a shiny, green for an average IV at or above `eggHighlight.minAverageIv`,
+which defaults to 25. Nothing has to be registered or enabled per container. The
+outlines are drawn on the container screen itself, so a vanilla chest, a
+Sophisticated Storage chest of any tier, a shulker box, and your own inventory all
+behave the same.
+
+A summary line above the screen covers the whole container:
+
+```text
+★ 1   ◆ 3   ↕ 2
+```
+
+`★` is the number of shiny eggs, `◆` the number of high-IV eggs, and `↕` how many
+of those are currently scrolled out of view. The counts include every slot, so a
+108-slot chest does not need scrolling through to see what it holds. Slots
+belonging to your own inventory are left out of the counts.
+
+Outlines use each slot's live position, so they stay correct while scrolling, after
+the container is sorted, and after you move an egg by hand.
+
+The egg's species, shininess, and IVs are read from its own
+`cobbreeding:pokemon_properties` component. Components travel with the item stack,
+so no server-side installation is involved. If a server enables Cobbreeding's
+`eggEncryptionEnabled`, that component holds AES ciphertext keyed by a file only
+the server has, and eggs are simply never outlined.
+
+This works only while the container's screen is open. A client is never sent a
+container's contents at any other time, so eggs cannot be watched in the
+background the way a pasture's `has_egg` blockstate can.
+
+Set `eggHighlight.enabled` to `false` to turn the feature off, `highlightShiny` to
+`false` to outline on IV average alone.
+
 ## Poke Snack monitoring
 
 Snack monitoring is enabled by default and automatic. It listens for the

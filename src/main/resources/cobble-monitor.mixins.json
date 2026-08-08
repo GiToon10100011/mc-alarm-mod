@@ -9,6 +9,7 @@
     "OpenPastureHandlerMixin",
     "PokemonPasturedHandlerMixin",
     "PokemonUnpasturedHandlerMixin",
-    "ClosePastureHandlerMixin"
+    "ClosePastureHandlerMixin",
+    "HandledScreenMixin"
   ]
 }

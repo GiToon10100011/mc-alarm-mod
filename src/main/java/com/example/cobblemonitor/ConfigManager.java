@@ -140,10 +140,13 @@ public final class ConfigManager {
         public Events events = new Events();
         public Messages messages = new Messages();
         public String pastureMonitorMode = "selected";
+        public EggHighlight eggHighlight = new EggHighlight();
         public List<MonitoredPasture> monitoredPastures = new ArrayList<>();
         public Map<String, String> playerNameCache = new LinkedHashMap<>();
 
         private void normalize() {
+            if (eggHighlight == null) eggHighlight = new EggHighlight();
+            eggHighlight.normalize();
             if (discordWebhook == null) discordWebhook = "";
             if (ntfyTopic == null) ntfyTopic = "";
             if (events == null) events = new Events();
@@ -164,6 +167,22 @@ public final class ConfigManager {
             }
             nightTime = Math.max(0, Math.min(23999, nightTime));
             resetTime = Math.max(0, Math.min(23999, resetTime));
+        }
+    }
+
+    /**
+     * Outlines notable Cobbreeding eggs in any container screen. The egg's properties
+     * ride along on the ItemStack, so this needs no server support - but a client only
+     * ever sees container contents while their screen is open.
+     */
+    public static final class EggHighlight {
+        public boolean enabled = true;
+        public boolean highlightShiny = true;
+        /** Average of the six IVs, each 0-31, at or above which an egg is outlined. */
+        public int minAverageIv = 25;
+
+        private void normalize() {
+            minAverageIv = Math.max(0, Math.min(31, minAverageIv));
         }
     }
 
