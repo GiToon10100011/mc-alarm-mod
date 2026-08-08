@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.3
+
+- Added egg highlighting. Open any container and Cobbreeding eggs worth keeping are outlined where they sit: gold for a shiny, green for an average IV at or above `eggHighlight.minAverageIv` (default 25). No command, registration, or webhook is involved - it works as soon as the mod is installed, in a vanilla chest, a Sophisticated Storage chest of any tier, a shulker box, or your own inventory.
+- A summary line above the container screen reports the whole container - `★` shiny, `◆` high IV, and `↕` how many of those are currently scrolled out of view - so a 108-slot chest does not have to be scrolled through to see what it holds. Outlines follow each slot's live position, staying correct while scrolling, after sorting, and after an egg is moved by hand.
+
 ## 1.8.2
 
 - Pasture parents captured from the Cobblemon GUI are now stored in the config instead of only in memory, so they survive a relog or world change. A pasture you rarely open - one emptied by a hopper, for example - keeps reporting its inferred egg species instead of falling back to "unavailable" every session.
